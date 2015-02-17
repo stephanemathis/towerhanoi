@@ -2,20 +2,20 @@
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
 		<item value="false" key="isRegEx"/>
-		<item value="RippleArray" key="selection"/>
+		<item value="" key="selection"/>
 		<item value="false" key="casesensitive"/>
 		<item value="false" key="incremental"/>
 		<item value="true" key="wrap"/>
 		<item value="false" key="wholeword"/>
 		<list key="findhistory">
-			<item value="RippleArray"/>
-			<item value="spinner_it"/>
-			<item value="spinneri"/>
-			<item value="spinner"/>
-			<item value="spinn"/>
-			<item value="smooth"/>
-			<item value="launchGame"/>
-			<item value="createNewGame"/>
+			<item value="pop"/>
+			<item value="tva"/>
+			<item value="tv"/>
+			<item value="topl"/>
+			<item value="popup"/>
+			<item value="scrollView1"/>
+			<item value="lay"/>
+			<item value="linearlayout1"/>
 		</list>
 		<list key="replacehistory">
 			<item value="Games.Achievements.unlock(mGoogleApiClient, "/>

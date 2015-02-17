@@ -158,7 +158,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
 			leftDrawer = findViewById(R.id.left_drawer);
 			rightDrawer = findViewById(R.id.right_drawer);
-
+			getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 			mDrawerToggle = new ActionBarDrawerToggle(this, mDrawerLayout, R.string.drawer_open, R.string.drawer_close) {
 				@SuppressLint("NewApi")
 				public void onDrawerClosed(View view) {
