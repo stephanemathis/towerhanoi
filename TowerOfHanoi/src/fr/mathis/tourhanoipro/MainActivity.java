@@ -269,8 +269,18 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		findViewById(R.id.sign_in_button).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
+
+				if (mGoogleApiClient == null) {
+					int error = GooglePlayServicesUtil.isGooglePlayServicesAvailable(MainActivity.this);
+					if (error == ConnectionResult.SUCCESS)
+						mGoogleApiClient = new GoogleApiClient.Builder(MainActivity.this).addConnectionCallbacks(MainActivity.this).addOnConnectionFailedListener(MainActivity.this).addApi(Games.API).addScope(Games.SCOPE_GAMES).build();
+
+				}
+
 				if (mGoogleApiClient != null)
 					mGoogleApiClient.connect();
+
+				mSignInClicked = true;
 			}
 		});
 
@@ -587,6 +597,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 				Games.signOut(mGoogleApiClient);
 				mGoogleApiClient.disconnect();
+				mGoogleApiClient = null;
 			}
 			UpdateLoginPanel(false);
 			return true;
@@ -887,6 +898,8 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	private void UpdateLoginPanel(boolean showConnectedLayout) {
 		if (showConnectedLayout) {
 			findViewById(R.id.sign_in_panel).setVisibility(View.GONE);
+			findViewById(R.id.sign_in_panel).setClickable(false);
+			findViewById(R.id.sign_in_panel).setFocusable(false);
 			if (menuItemDeconnection != null)
 				menuItemDeconnection.setVisible(true);
 
@@ -897,6 +910,8 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			}
 		} else {
 			findViewById(R.id.sign_in_panel).setVisibility(View.VISIBLE);
+			findViewById(R.id.sign_in_panel).setClickable(true);
+			findViewById(R.id.sign_in_panel).setFocusable(true);
 			if (menuItemDeconnection != null)
 				menuItemDeconnection.setVisible(false);
 			LinearLayout c = (LinearLayout) findViewById(R.id.container_play);
@@ -904,9 +919,6 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
 				c.setAlpha(0.7f);
 			}
-
-			((LinearLayout) findViewById(R.id.btn_achievement)).setBackgroundResource(0);
-			((LinearLayout) findViewById(R.id.btn_leaderboard)).setBackgroundResource(0);
 		}
 	}
 
