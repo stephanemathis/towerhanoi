@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <dimen name="app_defaultsize_w">200.0dip</dimen>
+    <dimen name="app_defaultsize_h">400.0dip</dimen>
+    <dimen name="app_minimumsize_w">200.0dip</dimen>
+    <dimen name="app_minimumsize_h">80.0dip</dimen>
+    <dimen name="onePix">1px</dimen>
+    <dimen name="mm_up_arrow_margin">-16dp</dimen>
+
+</resources>

@@ -1,0 +1,38 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:r="http://schemas.android.com/apk/res-auto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@color/ui_color"
+    android:orientation="vertical"
+    android:paddingTop="?attr/actionBarSize" >
+
+    <fr.mathis.tourhanoipro.views.StateView
+        android:id="@+id/sv_logo"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        r:duration="2000"
+        r:fadeFactor="10.0"
+        android:clickable="true"
+        android:focusableInTouchMode="true"
+        r:phase="1.0"
+        r:strokeColor="#ffffff"
+        r:strokeWidth="1.5" />
+
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="90dp"
+        android:gravity="center_horizontal|bottom" >
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:alpha="0.0"
+            android:fontFamily="sans-serif-condansed"
+            android:text="@string/s76"
+            android:textColor="#ffffff"
+            android:textSize="30sp" />
+    </LinearLayout>
+
+</LinearLayout>

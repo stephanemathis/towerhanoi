@@ -1,0 +1,77 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/tv_sectionTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:fontFamily="sans-serif-condansed"
+        android:gravity="center_vertical"
+        android:paddingLeft="8dp"
+        android:text="@string/s40"
+        android:textAllCaps="true"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:paddingBottom="8dp"
+        android:paddingLeft="6dp"
+        android:paddingRight="6dp"
+        android:paddingTop="8dp" >
+
+        <LinearLayout
+            android:id="@+id/linearLayout1"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/ui_color"
+            android:clickable="false"
+            android:focusable="false"
+            android:focusableInTouchMode="false"
+            android:padding="2dp" >
+
+            <fr.mathis.tourhanoipro.views.GameView
+                android:id="@+id/gv"
+                android:layout_width="fill_parent"
+                android:layout_height="120dp"
+                android:clickable="false"
+                android:focusable="false"
+                android:focusableInTouchMode="false" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/clickableArea"
+            android:layout_width="fill_parent"
+            android:layout_height="120dp"
+            android:layout_marginTop="2dp"
+            android:background="@drawable/selectable_background_hanoi"
+            android:orientation="vertical" >
+        </LinearLayout>
+
+        <ImageView
+            android:id="@+id/iv_playing"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true"
+            android:contentDescription="@string/nothing"
+            android:src="@drawable/ic_game_playing" />
+
+        <ImageView
+            android:id="@+id/iv_popup"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignRight="@+id/linearLayout1"
+            android:layout_marginRight="2dp"
+            android:layout_marginTop="2dp"
+            android:background="@drawable/selectable_background_hanoi"
+            android:contentDescription="@string/nothing"
+            android:padding="8dp"
+            android:src="@drawable/ic_popupmenu" />
+    </RelativeLayout>
+
+</LinearLayout>

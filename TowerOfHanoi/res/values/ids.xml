@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+Google Play game services IDs.
+Save this file as res/values/games-ids.xml in your project.
+-->
+<resources>
+
+    <string name="app_id">692278396496</string>
+    <string name="achievement_beginner">CgkI0IyI-JIUEAIQHw</string>
+    <string name="achievement_expert">CgkI0IyI-JIUEAIQIA</string>
+    <string name="achievement_are_you_crazy_">CgkI0IyI-JIUEAIQIQ</string>
+    <string name="achievement_level_1">CgkI0IyI-JIUEAIQAQ</string>
+    <string name="achievement_level_2">CgkI0IyI-JIUEAIQAg</string>
+    <string name="achievement_level_3">CgkI0IyI-JIUEAIQAw</string>
+    <string name="achievement_level_4">CgkI0IyI-JIUEAIQBA</string>
+    <string name="achievement_level_5">CgkI0IyI-JIUEAIQBQ</string>
+    <string name="achievement_level_6">CgkI0IyI-JIUEAIQBg</string>
+    <string name="achievement_level_7">CgkI0IyI-JIUEAIQBw</string>
+    <string name="achievement_level_8">CgkI0IyI-JIUEAIQCA</string>
+    <string name="achievement_level_9">CgkI0IyI-JIUEAIQCQ</string>
+    <string name="achievement_level_10">CgkI0IyI-JIUEAIQCg</string>
+    <string name="achievement_level_11">CgkI0IyI-JIUEAIQCw</string>
+    <string name="achievement_level_12">CgkI0IyI-JIUEAIQDA</string>
+    <string name="achievement_level_13">CgkI0IyI-JIUEAIQIg</string>
+    <string name="achievement_level_14">CgkI0IyI-JIUEAIQJw</string>
+    <string name="achievement_perfect_5">CgkI0IyI-JIUEAIQDQ</string>
+    <string name="achievement_perfect_6">CgkI0IyI-JIUEAIQDg</string>
+    <string name="achievement_perfect_7">CgkI0IyI-JIUEAIQDw</string>
+    <string name="achievement_perfect_8">CgkI0IyI-JIUEAIQEA</string>
+    <string name="achievement_perfect_9">CgkI0IyI-JIUEAIQEQ</string>
+    <string name="achievement_perfect_10">CgkI0IyI-JIUEAIQEg</string>
+    <string name="achievement_perfect_11">CgkI0IyI-JIUEAIQFA</string>
+    <string name="achievement_perfect_12">CgkI0IyI-JIUEAIQEw</string>
+    <string name="achievement_perfect_13">CgkI0IyI-JIUEAIQIw</string>
+    <string name="achievement_perfect_14">CgkI0IyI-JIUEAIQKA</string>
+    <string name="achievement_level_15">CgkI0IyI-JIUEAIQLg</string>
+    <string name="achievement_perfect_15">CgkI0IyI-JIUEAIQLw</string>
+    <string name="achievement_amazed">CgkI0IyI-JIUEAIQMQ</string>
+    <string name="leaderboard_perfect_score">CgkI0IyI-JIUEAIQFQ</string>
+    <string name="leaderboard_fastest_for_5_disks">CgkI0IyI-JIUEAIQFg</string>
+    <string name="leaderboard_fastest_for_6_disks">CgkI0IyI-JIUEAIQFw</string>
+    <string name="leaderboard_fastest_for_7_disks">CgkI0IyI-JIUEAIQGA</string>
+    <string name="leaderboard_fastest_for_8_disks">CgkI0IyI-JIUEAIQGQ</string>
+    <string name="leaderboard_fastest_for_9_disks">CgkI0IyI-JIUEAIQGg</string>
+    <string name="leaderboard_fastest_for_10_disks">CgkI0IyI-JIUEAIQGw</string>
+    <string name="leaderboard_fastest_for_11_disks">CgkI0IyI-JIUEAIQHA</string>
+    <string name="leaderboard_fastest_for_12_disks">CgkI0IyI-JIUEAIQHQ</string>
+    <string name="leaderboard_fastest_for_13_disks">CgkI0IyI-JIUEAIQJA</string>
+    <string name="leaderboard_fastest_for_14_disks">CgkI0IyI-JIUEAIQKQ</string>
+    <string name="leaderboard_fastest_for_15_disks">CgkI0IyI-JIUEAIQMA</string>
+
+</resources>

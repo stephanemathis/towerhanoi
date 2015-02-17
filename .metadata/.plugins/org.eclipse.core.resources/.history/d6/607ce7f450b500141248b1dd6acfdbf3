@@ -1,0 +1,192 @@
+package fr.mathis.tourhanoipro;
+
+import java.util.Timer;
+import java.util.TimerTask;
+
+import android.annotation.SuppressLint;
+import android.content.res.Resources;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.os.Bundle;
+import android.support.v4.view.ViewPager;
+import android.support.v4.view.ViewPager.OnPageChangeListener;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.ImageView;
+import android.widget.TextView;
+
+import com.google.example.games.basegameutils.BaseGameActivity;
+
+import fr.mathis.tourhanoipro.adapter.TutoPagerAdapter;
+import fr.mathis.tourhanoipro.tools.Tools;
+import fr.mathis.tourhanoipro.views.CustomPagerIndicator;
+
+public class TutoActivity extends BaseGameActivity implements OnPageChangeListener {
+
+	ViewPager pager;
+	TextView tvStep;
+	Drawable abBackground;
+	Drawable abImageView;
+	TextView avTitle;
+	CustomPagerIndicator cpi;
+	View vSwypeIndicator;
+	ObjectAnimator alphaAnimator;
+	ColorDrawable mBackgroundView;
+	ColorDrawable mBackgroundContainerView;
+
+	public TutoActivity() {
+		super(BaseGameActivity.CLIENT_APPSTATE | BaseGameActivity.CLIENT_GAMES);
+	}
+
+	@SuppressWarnings("deprecation")
+	@SuppressLint("NewApi")
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+
+		super.onCreate(savedInstanceState);
+
+		setContentView(R.layout.activity_tuto);
+		getSupportActionBar().setIcon(R.drawable.ic_launcher_white);
+
+		pager = (ViewPager) findViewById(R.id.tuto_pager);
+		tvStep = (TextView) findViewById(R.id.tv_step);
+		vSwypeIndicator = findViewById(R.id.v_swype_indicator);
+
+		mBackgroundView = new ColorDrawable(getResources().getColor(R.color.ui_color));
+		findViewById(R.id.topLevel).setBackgroundDrawable(mBackgroundView);
+		
+		mBackgroundContainerView = new ColorDrawable(Color.WHITE);
+		findViewById(R.id.rl_indicator_container).setBackgroundDrawable(mBackgroundContainerView);
+
+		TutoPagerAdapter pagerAdapter = new TutoPagerAdapter(getSupportFragmentManager());
+		pager.setAdapter(pagerAdapter);
+		pager.setPageMargin(Tools.convertDpToPixel(8));
+		pager.setOnPageChangeListener(this);
+		pager.setOffscreenPageLimit(5);
+
+		tvStep.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				finish();
+			}
+		});
+
+		cpi = (CustomPagerIndicator) findViewById(R.id.cpi_pager_indicator);
+
+		int titleId = Resources.getSystem().getIdentifier("action_bar_title", "id", "android");
+		if (titleId == 0)
+			titleId = com.actionbarsherlock.R.id.abs__action_bar_title;
+
+		avTitle = (TextView) findViewById(titleId);
+		avTitle.setTextColor(Color.argb(0, 255, 255, 255));
+
+		if (((ImageView) findViewById(android.R.id.home)) != null)
+			abImageView = ((ImageView) findViewById(android.R.id.home)).getDrawable();
+		if (abImageView == null)
+			abImageView = ((ImageView) findViewById(R.id.abs__home)).getDrawable();
+
+		abImageView.setAlpha(0);
+
+		abBackground = getResources().getDrawable(R.drawable.ab_solid_hanoi);
+		abBackground.setAlpha(0);
+		getSupportActionBar().setBackgroundDrawable(abBackground);
+
+		alphaAnimator = ObjectAnimator.ofFloat(vSwypeIndicator, "alpha", 0.0f, 0.75f);
+		alphaAnimator.setDuration(1000);
+		alphaAnimator.setRepeatCount(ValueAnimator.INFINITE);
+		alphaAnimator.setRepeatMode(ValueAnimator.REVERSE);
+		alphaAnimator.start();
+	}
+
+	@Override
+	public void onPageScrollStateChanged(int arg0) {
+
+	}
+
+	@Override
+	public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+
+		cpi.updateBounds(position, TutoPagerAdapter.NB_STEPS, positionOffset);
+
+		if (position > 0) {
+			abBackground.setAlpha(255);
+			abImageView.setAlpha(255);
+			avTitle.setTextColor(Color.argb(255, 255, 255, 255));
+		} else {
+			abBackground.setAlpha((int) (255 * Math.abs(positionOffset)));
+			abImageView.setAlpha((int) (255 * Math.abs(positionOffset)));
+			avTitle.setTextColor(Color.argb((int) (255 * Math.abs(positionOffset)), 255, 255, 255));
+		}
+
+		if (position == 2) {
+			mBackgroundView.setAlpha((int) (255 - 255 * Math.abs(positionOffset)));
+			mBackgroundContainerView.setAlpha((int) (255 - 255 * Math.abs(positionOffset)));
+			abBackground.setAlpha((int) (255 - 255 * Math.abs(positionOffset)));
+			abImageView.setAlpha((int) (255 - 255 * Math.abs(positionOffset)));
+			avTitle.setTextColor(Color.argb((int) (255 - 255 * Math.abs(positionOffset)), 255, 255, 255));
+		}
+	}
+
+	@Override
+	protected void onStop() {
+		abBackground.setAlpha(255);
+		abImageView.setAlpha(255);
+		avTitle.setTextColor(Color.argb(255, 255, 255, 255));
+		super.onStop();
+	}
+
+	@SuppressLint("NewApi")
+	@Override
+	public void onPageSelected(int pos) {
+		if (alphaAnimator != null)
+			alphaAnimator.cancel();
+
+		if (pos + 1 == TutoPagerAdapter.NB_STEPS) {
+			tvStep.setText(R.string.s52);
+
+			Timer t = new Timer();
+			t.schedule(new TimerTask() {
+
+				@Override
+				public void run() {
+					runOnUiThread(new Runnable() {
+						public void run() {
+							finish();
+							overridePendingTransition(R.anim.mainfadein, R.anim.tutofadeout);
+						}
+					});
+
+				}
+			}, 200);
+
+		} else {
+			tvStep.setText(R.string.s51);
+		}
+	}
+
+	@Override
+	public void onSignInFailed() {
+
+	}
+
+	@Override
+	public void onSignInSucceeded() {
+
+	}
+
+	public void unloackHack(int id) {
+		if (isSignedIn()) {
+			getGamesClient().unlockAchievement(getString(id));
+		}
+	}
+
+	public void signIn() {
+		beginUserInitiatedSignIn();
+	}
+
+	public boolean isSignedInHack() {
+		return isSignedIn();
+	}
+}

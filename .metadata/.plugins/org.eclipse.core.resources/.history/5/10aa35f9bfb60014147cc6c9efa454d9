@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Tower of Hanoi</string>
+    <string name="drawer_open">Open drawer</string>
+    <string name="drawer_close">Close drawer</string>
+    <string name="nothing"></string>
+    <string name="s21">Restart</string>
+    <string name="s26">New game</string>
+    <string name="s37">TUTORIAL</string>
+    <string name="s38">Achievements</string>
+    <string name="s39">Leaderboards</string>
+    <string name="s41">Disconnect from Google+</string>
+    <string name="s42">Sign in to\naccess achievements\nand leaderboards.</string>
+    <string name="s43">Tower solved</string>
+    <string name="s44">The tower was built with :tower disks.</string>
+    <string name="s45">The optimal path consists of :m moves.</string>
+    <string name="s46">moves</string>
+    <string name="s47">seconds</string>
+    <string name="s48">Perfect score !</string>
+    <string name="s49">Enable Quick touch mode</string>
+    <string name="s50">Disable quick touch mode</string>
+    <string name="s51">Skip</string>
+    <string name="s52">Skip</string>
+    <string name="s56">Touch the screen and draw a rectangle with your finger; it will be the area of the Quick touch mode</string>
+    <string name="s57">Then you just have to move your finger on the area to drag disks from one tower to another.</string>
+    <string name="s58">Your goal is to move all the disks to the right tower.</string>
+    <string name="s59">You can\'t move multiple disks at the same time.</string>
+    <string name="s60">A disk can only be on top of a bigger one.</string>
+    <string name="s61">How to build big towers</string>
+    <string name="s62">Training ! But to help you start, start small. To create a four level tower, you just have to create a three level tower in the middle</string>
+    <string name="s63">Then, move the last disk to the right and recreate a three level tower above it. It is simple to create a five, four level tower or even more.</string>
+    <string name="s64">Good luck ! Concentration is key.</string>
+	<string name="s65">sec</string>
+	<string name="s66">min</string>
+	<string name="s67">Play Games sync</string>
+	<string name="s68">It seems that multiple saved games are available, choose the one you want to keep :</string>
+	<string name="s69">OK</string>
+	<string name="s70">Saved games</string>
+	<string name="s71">Lock the drawers reactions to gestures</string>
+	<string name="s72">Current level</string>
+	<string name="s73">Saved games</string>
+	<string name="s74">Play</string>
+	<string name="s75">Delete</string>
+	<string name="s76"><b>Tower</b> of <b>Hanoi</b></string>
+	<string name="s77">Before the end of your first game, make sure to connect to Play Games services.</string>
+	<string name="s78">- You\'ll get achievements to keep track of your porgress</string>
+	<string name="s79">- And you can compare your best scores with other player with the leaderboards</string>
+	<string name="s80">You\'re ready to start…</string>
+	<string name="s81">You are already connected</string>
+	<string name="s82">Need help ?</string>
+	<string name="s83">Draw a line on the screen,\nfollow the purple line</string>
+	<string name="s84">Move your finder inside the ractangle to control the game !</string>
+</resources>
