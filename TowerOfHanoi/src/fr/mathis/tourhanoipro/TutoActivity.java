@@ -12,6 +12,10 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.TextView;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.games.Games;
 import com.nineoldandroids.animation.ObjectAnimator;
 import com.nineoldandroids.animation.ValueAnimator;
@@ -19,7 +23,7 @@ import com.nineoldandroids.animation.ValueAnimator;
 import fr.mathis.tourhanoipro.adapter.TutoPagerAdapter;
 import fr.mathis.tourhanoipro.views.CustomPagerIndicator;
 
-public class TutoActivity extends ActionBarActivity implements OnPageChangeListener {
+public class TutoActivity extends ActionBarActivity implements OnPageChangeListener, ConnectionCallbacks, OnConnectionFailedListener {
 
 	ViewPager pager;
 	TextView tvStep;
@@ -28,6 +32,7 @@ public class TutoActivity extends ActionBarActivity implements OnPageChangeListe
 	View vBottomContainer;
 	View vBottomSeparator;
 	ObjectAnimator alphaAnimator;
+	GoogleApiClient mGoogleApiClient;
 
 	@SuppressLint("NewApi")
 	@Override
@@ -38,6 +43,10 @@ public class TutoActivity extends ActionBarActivity implements OnPageChangeListe
 		setContentView(R.layout.activity_tuto);
 
 		getSupportActionBar().hide();
+
+		if (getIntent().getBooleanExtra("connectClient", false)) {
+			mGoogleApiClient = new GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(Games.API).addScope(Games.SCOPE_GAMES).build();
+		}
 
 		pager = (ViewPager) findViewById(R.id.tuto_pager);
 		tvStep = (TextView) findViewById(R.id.tv_step);
@@ -121,11 +130,38 @@ public class TutoActivity extends ActionBarActivity implements OnPageChangeListe
 	}
 
 	public void unloackHack(int id) {
-		MainActivity a = MainActivity.latestMainActivityInstance;
-		if (a != null) {
-			if (a.mGoogleApiClient != null && a.mGoogleApiClient.isConnected()) {
-				Games.Achievements.unlock(a.mGoogleApiClient, getString(id));
-			}
+		if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+			Games.Achievements.unlock(mGoogleApiClient, getString(id));
 		}
+	}
+
+	@Override
+	public void onConnectionFailed(ConnectionResult arg0) {
+
+	}
+
+	@Override
+	public void onConnected(Bundle arg0) {
+
+	}
+
+	@Override
+	public void onConnectionSuspended(int arg0) {
+
+	}
+
+	@Override
+	protected void onStart() {
+		super.onStart();
+
+		if (mGoogleApiClient != null && !mGoogleApiClient.isConnecting())
+			mGoogleApiClient.connect();
+	}
+
+	@Override
+	protected void onStop() {
+		super.onStop();
+		if (mGoogleApiClient != null)
+			mGoogleApiClient.disconnect();
 	}
 }

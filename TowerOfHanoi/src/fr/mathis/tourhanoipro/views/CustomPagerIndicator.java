@@ -8,6 +8,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.util.AttributeSet;
 import android.view.View;
+import fr.mathis.tourhanoipro.R;
 import fr.mathis.tourhanoipro.tools.Tools;
 
 public class CustomPagerIndicator extends View {
@@ -19,6 +20,7 @@ public class CustomPagerIndicator extends View {
 	private int _viewHeight = 0;
 	private int _viewWidth = 0;
 	private Paint _paint;
+	private int _primaryColor;
 
 	public CustomPagerIndicator(Context context) {
 		super(context);
@@ -38,6 +40,7 @@ public class CustomPagerIndicator extends View {
 	private void init() {
 		_paint = new Paint(Paint.ANTI_ALIAS_FLAG);
 		_paint.setStyle(Paint.Style.FILL);
+		_primaryColor = getContext().getResources().getColor(R.color.primary_color);
 	}
 
 	@Override
@@ -83,7 +86,7 @@ public class CustomPagerIndicator extends View {
 			int spacing = (_viewWidth / (_maxPosition + 1)) / (_maxPosition + 1);
 
 			canvas.drawColor(Color.TRANSPARENT);
-			_paint.setColor(Color.argb(255, 170, 102, 204));
+			_paint.setColor(_primaryColor);
 
 			// paint rectangles
 			_paint.setAlpha(204);

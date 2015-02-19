@@ -108,8 +108,6 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	GoogleApiClient mGoogleApiClient;
 	boolean tutorialShownConnectionAfterResume = false;
 
-	static MainActivity latestMainActivityInstance;
-
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		setTheme(R.style.AppBaseTheme);
@@ -650,14 +648,14 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		int glowDrawableId = getApplicationContext().getResources().getIdentifier("overscroll_glow", "drawable", "android");
 		if (glowDrawableId > 0) {
 			Drawable androidGlow = getApplicationContext().getResources().getDrawable(glowDrawableId);
-			androidGlow.setColorFilter(Color.parseColor(getString(R.color.ui_color)), PorterDuff.Mode.SRC_ATOP);
+			androidGlow.setColorFilter(Color.parseColor(getString(R.color.primary_color)), PorterDuff.Mode.SRC_ATOP);
 		}
 
 		// change the default blue scroll edge
 		int edgeDrawableId = getApplicationContext().getResources().getIdentifier("overscroll_edge", "drawable", "android");
 		if (edgeDrawableId > 0) {
 			Drawable androidEdge = getApplicationContext().getResources().getDrawable(edgeDrawableId);
-			androidEdge.setColorFilter(Color.parseColor(getString(R.color.ui_color)), PorterDuff.Mode.SRC_ATOP);
+			androidEdge.setColorFilter(Color.parseColor(getString(R.color.primary_color)), PorterDuff.Mode.SRC_ATOP);
 		}
 
 		super.onResume();
@@ -690,7 +688,6 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			}
 			break;
 		case RESULT_TUTORIAL:
-			latestMainActivityInstance = null;
 			if (tutorialShownConnectionAfterResume) {
 				if (mGoogleApiClient != null && !mGoogleApiClient.isConnecting())
 					mGoogleApiClient.connect();
@@ -860,8 +857,8 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	}
 
 	public void showTutorial(boolean animate) {
-		latestMainActivityInstance = this;
 		Intent i = new Intent(MainActivity.this, TutoActivity.class);
+		i.putExtra("connectClient", animate && mGoogleApiClient != null && mGoogleApiClient.isConnected());
 		startActivityForResult(i, RESULT_TUTORIAL);
 		if (!animate)
 			overridePendingTransition(0, 0);

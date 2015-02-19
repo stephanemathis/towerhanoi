@@ -656,7 +656,7 @@ public class GameView extends View {
 			if (helpLine) {
 
 				Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
-				mPaint.setColor(Color.parseColor(getContext().getString(R.color.ui_color)));
+				mPaint.setColor(Color.parseColor(getContext().getString(R.color.primary_color)));
 				mPaint.setStyle(Paint.Style.STROKE);
 				mPaint.setStrokeWidth(Tools.convertDpToPixel(2.0f));
 				mPaint.setPathEffect(new DashPathEffect(new float[] { Tools.convertDpToPixel(3), Tools.convertDpToPixel(1.4f) }, 0));

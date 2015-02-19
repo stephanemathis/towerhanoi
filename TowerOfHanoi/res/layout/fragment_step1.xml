@@ -48,7 +48,7 @@
                 android:layout_width="fill_parent"
                 android:layout_height="1dp"
                 android:layout_marginBottom="24dp"
-                android:background="@color/ui_color" >
+                android:background="@color/primary_color" >
             </View>
 
             <TextView
