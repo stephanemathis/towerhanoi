@@ -452,6 +452,7 @@ public class GameView extends View {
 			win = false;
 
 		if (!win) {
+			win = true;
 			circles = field.getTowers().get(1).getCircles();
 			value = nbCircles;
 			if (circles.size() == nbCircles) {
