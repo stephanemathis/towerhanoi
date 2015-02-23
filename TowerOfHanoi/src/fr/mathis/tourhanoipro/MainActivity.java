@@ -248,7 +248,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 
 	private void initEvents() {
 		findViewById(R.id.btn_newGame).setOnClickListener(new OnClickListener() {
-			@SuppressLint("NewApi")
+
 			@Override
 			public void onClick(View v) {
 				pendingDrawerAction = DRAWER_NEW_GAME;
@@ -424,7 +424,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 								ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(stepContainer, "alpha", 0.0f, 1.0f);
 								alphaAnimator.setDuration(500);
 								alphaAnimator.start();
-								MainActivity.this.currentGame.drawHelpLine(true);
+								MainActivity.this.currentGame.setDrawHelpLine(true);
 							}
 
 							@Override

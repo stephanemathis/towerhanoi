@@ -10,12 +10,10 @@ import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
-import android.graphics.PathEffect;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.view.MotionEvent;
 import android.view.View;
 import fr.mathis.tourhanoipro.R;
@@ -33,78 +31,100 @@ public class GameView extends View {
 	public static int MODE_MULTIPLE = 1;
 	public static int MODE_SIZE = 2;
 
-	int _viewHeight, _viewWidth;
-	Rect npdBounds = new Rect(0, 0, 0, 0);
-	Paint myPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+	private static final float TOUCH_TOLERANCE = 4;
 
-	PathEffect effect;
-	int nb = 0;
-	boolean quickZoneTouched = false;
-	public boolean isBuildingQuickZone = false;
-	Point dBuilding = null;
-	Point eBuilding = null;
-	public ClassField field;
-	DisplayMetrics displaymetrics;
-	int id;
-	public int nbCircles;
-	int nbCoups;
-	int nbCoupsRequis;
-	Point[] line;
-	long gameDuration = 0;
-	long lastGameReplayed = -1;
-	Context c;
-	TurnListener turnListener;
-	HelpListener helpListener;
-	boolean disabled = false;
-	int currentMode = -1;
-	Path path;
-	boolean helpLine = false;
+	// state
+	ClassField _currentGameField;
+	boolean _isBuildingQuickZone;
+	boolean _currentTouchIsInquickTouchZone;
+	int _currentGameDiskNumber;
+	int _currentGameMovesCount;
+	int _currentGameRequiredMinCount;
+	long _currentGameSessionDuration;
+	long _currentGameSavedDurationlastGame = -1;
+	Point[] _startAndEndTouchPoint;
+	boolean _shouldDrawHelpLine;
+	int _currentGameMode;
+	boolean _isTouchDisabled;
+
+	// draw variables
+	int _viewHeight;
+	int _viewWidth;
+	Rect _reusableRect;
+	Paint _elementsPaint;
+	Paint _fingerLinePaint;
+	Path _fingerLinePath;
+
+	// touch variables
+	float latestTouchPositionX;
+	float latestTouchPositionY;
+	Point _qtStartEdgeBuilding = null;
+	Point _qtEndEdgeBuilding = null;
+
+	// listeners
+	TurnListener _turnListener;
+	HelpListener _helpListener;
 
 	public GameView(Context context) {
 		super(context);
-		c = context;
 		init();
 	}
 
 	public GameView(Context context, AttributeSet attrs) {
 		super(context, attrs);
-		c = context;
 		init();
 	}
 
 	private void init() {
 		setFocusable(true);
 
-		createNewGame();
+		_currentGameSessionDuration = 0;
+		_currentGameMode = -1;
+		_isTouchDisabled = false;
+		_shouldDrawHelpLine = false;
+		_isBuildingQuickZone = false;
+		_currentTouchIsInquickTouchZone = false;
+		_reusableRect = new Rect(0, 0, 0, 0);
 
-		myPaint.setStyle(Paint.Style.FILL);
-		myPaint.setTextSize(Tools.convertDpToPixel(32));
-		myPaint.setStrokeWidth(Tools.convertDpToPixel(1.0f));
-		myPaint.setDither(true);
-		myPaint.setStrokeJoin(Paint.Join.ROUND);
-		myPaint.setStrokeCap(Paint.Cap.ROUND);
-		myPaint.setAntiAlias(true);
-		float[] points = new float[2];
-		points[0] = 5.0f;
-		points[1] = 5.0f;
-		effect = new DashPathEffect(points, 0.0f);
+		_elementsPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+		_elementsPaint.setStyle(Paint.Style.FILL);
+		_elementsPaint.setTextSize(Tools.convertDpToPixel(32));
+		_elementsPaint.setStrokeWidth(Tools.convertDpToPixel(1.0f));
+		_elementsPaint.setDither(true);
+		_elementsPaint.setStrokeJoin(Paint.Join.ROUND);
+		_elementsPaint.setStrokeCap(Paint.Cap.ROUND);
+		_elementsPaint.setAntiAlias(true);
+
+		_fingerLinePaint = new Paint();
+		_fingerLinePaint.setAntiAlias(true);
+		_fingerLinePaint.setDither(true);
+		_fingerLinePaint.setStyle(Paint.Style.STROKE);
+		_fingerLinePaint.setStrokeJoin(Paint.Join.ROUND);
+		_fingerLinePaint.setStrokeCap(Paint.Cap.ROUND);
+		_fingerLinePaint.setStrokeWidth(Tools.convertDpToPixel(2));
+
+		createNewGame();
 	}
 
 	public void createNewGame() {
-		SharedPreferences mgr = PreferenceManager.getDefaultSharedPreferences(c);
-		createNewGame(Integer.parseInt(mgr.getString("nbCircles", "5")));
+		SharedPreferences mgr = PreferenceManager.getDefaultSharedPreferences(getContext());
+		int numberOfCircles = Integer.parseInt(mgr.getString("nbCircles", "5"));
+		createNewGame(numberOfCircles);
 	}
 
 	public void createNewGame(int size) {
-		gameDuration = 0;
-		lastGameReplayed = -1;
+		_currentGameSessionDuration = 0;
+		_currentGameSavedDurationlastGame = -1;
 
 		QuickTouch q = null;
-		if (field != null && field.getQt() != null)
-			q = field.getQt();
-		field = new ClassField();
-		field.setQt(q);
-		field.setId(0);
+
+		if (_currentGameField != null && _currentGameField.getQt() != null)
+			q = _currentGameField.getQt();
+
+		_currentGameField = new ClassField();
+		_currentGameField.setQt(q);
+		_currentGameField.setId(0);
+
 		ArrayList<ClassTower> towers = new ArrayList<ClassTower>();
 		for (int i = 0; i < 3; i++) {
 			ClassTower tower = new ClassTower();
@@ -120,40 +140,28 @@ public class GameView extends View {
 		colors.add(Color.parseColor("#FFBB33"));
 		colors.add(Color.parseColor("#AA66CC"));
 
-		nbCircles = size;
-		nbCoups = 0;
-		nbCoupsRequis = (int) (Math.pow(2, nbCircles) - 1);
-		if (turnListener != null) {
-			turnListener.turnPlayed(0, nbCoupsRequis);
+		_currentGameDiskNumber = size;
+		_currentGameMovesCount = 0;
+		_currentGameRequiredMinCount = (int) (Math.pow(2, _currentGameDiskNumber) - 1);
+		if (_turnListener != null) {
+			_turnListener.turnPlayed(0, _currentGameRequiredMinCount);
 		}
-		for (int i = nbCircles; i > 0; i--) {
+		for (int i = _currentGameDiskNumber; i > 0; i--) {
 			towers.get(0).getCircles().add(new ClassCircle(i, colors.get(i % 5)));
 		}
 
-		field.setTowers(towers);
+		_currentGameField.setTowers(towers);
 		this.invalidate();
 	}
 
 	public void resetQuickTouchZone() {
-		field.setQt(null);
-	}
-
-	public QuickTouch getQt() {
-		if (field != null)
-			return field.getQt();
-		else
-			return null;
-	}
-
-	public void setQt(QuickTouch qt) {
-		if (field != null)
-			field.setQt(qt);
+		_currentGameField.setQt(null);
 	}
 
 	public void cleanTouch() {
-		line = new Point[2];
-		path = new Path();
-		quickZoneTouched = false;
+		_startAndEndTouchPoint = new Point[2];
+		_fingerLinePath = new Path();
+		_currentTouchIsInquickTouchZone = false;
 		this.invalidate();
 	}
 
@@ -171,11 +179,11 @@ public class GameView extends View {
 		String v1 = values[0];
 		String[] towers = v1.split(":");
 		QuickTouch q = null;
-		if (field != null && field.getQt() != null)
-			q = field.getQt();
-		field = new ClassField();
-		field.setQt(q);
-		field.setTowers(new ArrayList<ClassTower>());
+		if (_currentGameField != null && _currentGameField.getQt() != null)
+			q = _currentGameField.getQt();
+		_currentGameField = new ClassField();
+		_currentGameField.setQt(q);
+		_currentGameField.setTowers(new ArrayList<ClassTower>());
 		int i = 0;
 
 		for (String t : towers) {
@@ -183,7 +191,7 @@ public class GameView extends View {
 				ClassTower tower = new ClassTower();
 				tower.setCircles(new ArrayList<ClassCircle>());
 
-				field.getTowers().add(tower);
+				_currentGameField.getTowers().add(tower);
 
 				if (t != null && t.length() != 0 && t.compareTo("n") != 0) {
 					String[] circles = t.split(",");
@@ -200,17 +208,17 @@ public class GameView extends View {
 			i++;
 		}
 
-		nbCircles = Integer.parseInt(values[1]);
-		nbCoups = Integer.parseInt(values[2]);
-		nbCoupsRequis = Integer.parseInt(values[3]);
+		_currentGameDiskNumber = Integer.parseInt(values[1]);
+		_currentGameMovesCount = Integer.parseInt(values[2]);
+		_currentGameRequiredMinCount = Integer.parseInt(values[3]);
 		if (values.length > 4)
-			gameDuration = Long.parseLong(values[4]);
+			_currentGameSessionDuration = Long.parseLong(values[4]);
 		else
-			gameDuration = 0;
-		lastGameReplayed = -1;
+			_currentGameSessionDuration = 0;
+		_currentGameSavedDurationlastGame = -1;
 
-		if (turnListener != null) {
-			turnListener.turnPlayed(nbCoups, nbCoupsRequis);
+		if (_turnListener != null) {
+			_turnListener.turnPlayed(_currentGameMovesCount, _currentGameRequiredMinCount);
 		}
 
 		this.invalidate();
@@ -221,7 +229,7 @@ public class GameView extends View {
 
 		String valuesString = "";
 
-		for (ClassTower ct : field.getTowers()) {
+		for (ClassTower ct : _currentGameField.getTowers()) {
 			valuesString += ":";
 			for (ClassCircle cc : ct.getCircles()) {
 				valuesString += "," + cc.getId();
@@ -230,11 +238,11 @@ public class GameView extends View {
 				valuesString += "n";
 		}
 
-		valuesString += ";" + nbCircles;
-		valuesString += ";" + nbCoups;
-		valuesString += ";" + nbCoupsRequis;
+		valuesString += ";" + _currentGameDiskNumber;
+		valuesString += ";" + _currentGameMovesCount;
+		valuesString += ";" + _currentGameRequiredMinCount;
 
-		valuesString += ";" + (gameDuration + (lastGameReplayed > 0 ? System.currentTimeMillis() - lastGameReplayed : 0));
+		valuesString += ";" + (_currentGameSessionDuration + (_currentGameSavedDurationlastGame > 0 ? System.currentTimeMillis() - _currentGameSavedDurationlastGame : 0));
 
 		res = valuesString;
 
@@ -244,28 +252,28 @@ public class GameView extends View {
 	@SuppressLint("ClickableViewAccessibility")
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		if (disabled)
+		if (_isTouchDisabled)
 			return false;
 		else {
 
-			if (isBuildingQuickZone) {
+			if (_isBuildingQuickZone) {
 				if (event.getAction() == MotionEvent.ACTION_DOWN) {
-					dBuilding = new Point((int) event.getX(), (int) event.getY());
+					_qtStartEdgeBuilding = new Point((int) event.getX(), (int) event.getY());
 				} else if (event.getAction() == MotionEvent.ACTION_MOVE) {
-					eBuilding = new Point((int) event.getX(), (int) event.getY());
+					_qtEndEdgeBuilding = new Point((int) event.getX(), (int) event.getY());
 				} else if (event.getAction() == MotionEvent.ACTION_UP) {
-					if (dBuilding != null && eBuilding != null) {
-						isBuildingQuickZone = false;
+					if (_qtStartEdgeBuilding != null && _qtEndEdgeBuilding != null) {
+						_isBuildingQuickZone = false;
 
 						int x, y, w, h;
-						x = dBuilding.x < eBuilding.x ? dBuilding.x : eBuilding.x;
-						y = dBuilding.y < eBuilding.y ? dBuilding.y : eBuilding.y;
+						x = _qtStartEdgeBuilding.x < _qtEndEdgeBuilding.x ? _qtStartEdgeBuilding.x : _qtEndEdgeBuilding.x;
+						y = _qtStartEdgeBuilding.y < _qtEndEdgeBuilding.y ? _qtStartEdgeBuilding.y : _qtEndEdgeBuilding.y;
 
-						w = Math.abs(dBuilding.x - eBuilding.x);
-						h = Math.abs(dBuilding.y - eBuilding.y);
+						w = Math.abs(_qtStartEdgeBuilding.x - _qtEndEdgeBuilding.x);
+						h = Math.abs(_qtStartEdgeBuilding.y - _qtEndEdgeBuilding.y);
 
 						QuickTouch qt = new QuickTouch();
-						if (helpLine) {
+						if (_shouldDrawHelpLine) {
 							qt.setWidth(Tools.convertDpToPixel(160.0f));
 							qt.setHeight(Tools.convertDpToPixel(80.0f));
 							qt.setTop(_viewHeight / 2 - Tools.convertDpToPixel(40.0f));
@@ -277,58 +285,59 @@ public class GameView extends View {
 							qt.setLeft(x);
 						}
 
-						field.setQt(qt);
-						eBuilding = null;
-						dBuilding = null;
-						helpLine = false;
-						if (helpListener != null)
-							helpListener.stepPassed(0);
+						_currentGameField.setQt(qt);
+						_qtEndEdgeBuilding = null;
+						_qtStartEdgeBuilding = null;
+						_shouldDrawHelpLine = false;
+						if (_helpListener != null)
+							_helpListener.stepPassed(0);
 					} else {
-						field.setQt(null);
-						eBuilding = null;
-						dBuilding = null;
-						isBuildingQuickZone = false;
-						helpLine = false;
+						_currentGameField.setQt(null);
+						_qtEndEdgeBuilding = null;
+						_qtStartEdgeBuilding = null;
+						_isBuildingQuickZone = false;
+						_shouldDrawHelpLine = false;
 					}
 				}
 				this.invalidate();
 			} else {
-
 				if (event.getAction() == MotionEvent.ACTION_DOWN) {
-					line = new Point[2];
-					path = new Path();
-					line[0] = new Point((int) event.getX(), (int) event.getY());
-					path.moveTo(event.getX(), event.getY());
-					if (field.getQt() != null) {
+					_startAndEndTouchPoint = new Point[2];
+					_fingerLinePath = new Path();
+					_startAndEndTouchPoint[0] = new Point((int) event.getX(), (int) event.getY());
+					_fingerLinePath.moveTo(event.getX(), event.getY());
+					latestTouchPositionX = event.getX();
+					latestTouchPositionY = event.getY();
+					if (_currentGameField.getQt() != null) {
 						int t, w, h, l;
 						Point p = new Point((int) event.getX(), (int) event.getY());
-						t = field.getQt().getTop();
-						w = field.getQt().getWidth();
-						h = field.getQt().getHeight();
-						l = field.getQt().getLeft();
+						t = _currentGameField.getQt().getTop();
+						w = _currentGameField.getQt().getWidth();
+						h = _currentGameField.getQt().getHeight();
+						l = _currentGameField.getQt().getLeft();
 
 						if (p.x < l + w && p.x > l && p.y > t && p.y < t + h) {
-							quickZoneTouched = true;
+							_currentTouchIsInquickTouchZone = true;
 							p.x = p.x - l;
 
 							if (p.x < w / 3)
-								line[0] = new Point(_viewWidth / 6, _viewHeight * 2 / 5);
+								_startAndEndTouchPoint[0] = new Point(_viewWidth / 6, _viewHeight * 2 / 5);
 							else if (p.x < w * 2 / 3)
-								line[0] = new Point(_viewWidth / 2, _viewHeight * 2 / 5);
+								_startAndEndTouchPoint[0] = new Point(_viewWidth / 2, _viewHeight * 2 / 5);
 							else
-								line[0] = new Point(_viewWidth / 2 + _viewWidth / 6 + _viewWidth / 6, _viewHeight * 2 / 5);
+								_startAndEndTouchPoint[0] = new Point(_viewWidth / 2 + _viewWidth / 6 + _viewWidth / 6, _viewHeight * 2 / 5);
 						}
 					}
 
 				} else if (event.getAction() == MotionEvent.ACTION_MOVE) {
 					Point p = new Point((int) event.getX(), (int) event.getY());
 
-					if (quickZoneTouched) {
+					if (_currentTouchIsInquickTouchZone) {
 						int t, w, h, l;
-						t = field.getQt().getTop();
-						w = field.getQt().getWidth();
-						h = field.getQt().getHeight();
-						l = field.getQt().getLeft();
+						t = _currentGameField.getQt().getTop();
+						w = _currentGameField.getQt().getWidth();
+						h = _currentGameField.getQt().getHeight();
+						l = _currentGameField.getQt().getLeft();
 
 						if (p.x < l)
 							p.x = l;
@@ -342,35 +351,46 @@ public class GameView extends View {
 						p.x = p.x - l;
 
 						if (p.x < w / 3)
-							line[1] = new Point(_viewWidth / 6, _viewHeight * 2 / 5);
+							_startAndEndTouchPoint[1] = new Point(_viewWidth / 6, _viewHeight * 2 / 5);
 						else if (p.x < w * 2 / 3)
-							line[1] = new Point(_viewWidth / 2, _viewHeight * 2 / 5);
+							_startAndEndTouchPoint[1] = new Point(_viewWidth / 2, _viewHeight * 2 / 5);
 						else
-							line[1] = new Point(_viewWidth / 2 + _viewWidth / 6 + _viewWidth / 6, _viewHeight * 2 / 5);
+							_startAndEndTouchPoint[1] = new Point(_viewWidth / 2 + _viewWidth / 6 + _viewWidth / 6, _viewHeight * 2 / 5);
 
 					} else {
-						// line.add(p);
-						line[1] = new Point((int) event.getX(), (int) event.getY());
+						_startAndEndTouchPoint[1] = new Point((int) event.getX(), (int) event.getY());
 						int historySize = event.getHistorySize();
 						for (int i = 0; i < historySize; i++) {
 							float historicalX = event.getHistoricalX(i);
 							float historicalY = event.getHistoricalY(i);
 
-							path.lineTo(historicalX, historicalY);
-						}
-						path.lineTo(event.getX(), event.getY());
+							float dx = Math.abs(event.getHistoricalX(i) - latestTouchPositionX);
+							float dy = Math.abs(event.getHistoricalY(i) - latestTouchPositionY);
 
+							if (dx >= TOUCH_TOLERANCE || dy >= TOUCH_TOLERANCE) {
+								_fingerLinePath.quadTo(latestTouchPositionX, latestTouchPositionY, (historicalX + latestTouchPositionX) / 2, (historicalY + latestTouchPositionY) / 2);
+								latestTouchPositionX = historicalX;
+								latestTouchPositionY = historicalY;
+							}
+
+							_fingerLinePath.quadTo(latestTouchPositionX, latestTouchPositionY, historicalX, historicalY);
+							latestTouchPositionX = historicalX;
+							latestTouchPositionY = historicalY;
+						}
+						_fingerLinePath.quadTo(latestTouchPositionX, latestTouchPositionY, event.getX(), event.getY());
+						latestTouchPositionX = event.getX();
+						latestTouchPositionY = event.getY();
 					}
 				} else if (event.getAction() == MotionEvent.ACTION_UP) {
 
-					if (quickZoneTouched)
-						if (helpListener != null)
-							helpListener.stepPassed(1);
+					if (_currentTouchIsInquickTouchZone)
+						if (_helpListener != null)
+							_helpListener.stepPassed(1);
 
-					moveOneCircle(line);
-					line = new Point[2];
-					quickZoneTouched = false;
-					path = new Path();
+					moveOneCircle(_startAndEndTouchPoint);
+					_startAndEndTouchPoint = new Point[2];
+					_currentTouchIsInquickTouchZone = false;
+					_fingerLinePath = new Path();
 				}
 
 				this.invalidate();
@@ -403,28 +423,28 @@ public class GameView extends View {
 
 			if (startTower != endTower) {
 
-				if (lastGameReplayed == -1)
-					lastGameReplayed = System.currentTimeMillis();
+				if (_currentGameSavedDurationlastGame == -1)
+					_currentGameSavedDurationlastGame = System.currentTimeMillis();
 
-				int nbCirclesStartTower = field.getTowers().get(startTower).getCircles().size();
+				int nbCirclesStartTower = _currentGameField.getTowers().get(startTower).getCircles().size();
 				ClassCircle toMove = null;
 				ClassCircle toBeSecond = null;
 				if (nbCirclesStartTower > 0) {
 					boolean isAllowed = true;
-					toMove = field.getTowers().get(startTower).getCircles().get(nbCirclesStartTower - 1);
-					if (field.getTowers().get(endTower).getCircles().size() > 0) {
-						toBeSecond = field.getTowers().get(endTower).getCircles().get(field.getTowers().get(endTower).getCircles().size() - 1);
+					toMove = _currentGameField.getTowers().get(startTower).getCircles().get(nbCirclesStartTower - 1);
+					if (_currentGameField.getTowers().get(endTower).getCircles().size() > 0) {
+						toBeSecond = _currentGameField.getTowers().get(endTower).getCircles().get(_currentGameField.getTowers().get(endTower).getCircles().size() - 1);
 					}
 					if (toBeSecond != null && toMove.getId() > toBeSecond.getId()) {
 						isAllowed = false;
 					}
 					if (isAllowed) {
-						field.getTowers().get(startTower).getCircles().remove(nbCirclesStartTower - 1);
-						field.getTowers().get(endTower).getCircles().add(toMove);
-						nbCoups++;
+						_currentGameField.getTowers().get(startTower).getCircles().remove(nbCirclesStartTower - 1);
+						_currentGameField.getTowers().get(endTower).getCircles().add(toMove);
+						_currentGameMovesCount++;
 
-						if (turnListener != null) {
-							turnListener.turnPlayed(nbCoups, nbCoupsRequis);
+						if (_turnListener != null) {
+							_turnListener.turnPlayed(_currentGameMovesCount, _currentGameRequiredMinCount);
 						}
 						CheckGameWin();
 
@@ -435,10 +455,10 @@ public class GameView extends View {
 	}
 
 	private void CheckGameWin() {
-		ArrayList<ClassCircle> circles = field.getTowers().get(2).getCircles();
+		ArrayList<ClassCircle> circles = _currentGameField.getTowers().get(2).getCircles();
 		boolean win = true;
-		int value = nbCircles;
-		if (circles.size() == nbCircles) {
+		int value = _currentGameDiskNumber;
+		if (circles.size() == _currentGameDiskNumber) {
 			for (int i = 0; i < circles.size(); i++) {
 				if (circles.get(i).getId() != value) {
 					win = false;
@@ -453,9 +473,9 @@ public class GameView extends View {
 
 		if (!win) {
 			win = true;
-			circles = field.getTowers().get(1).getCircles();
-			value = nbCircles;
-			if (circles.size() == nbCircles) {
+			circles = _currentGameField.getTowers().get(1).getCircles();
+			value = _currentGameDiskNumber;
+			if (circles.size() == _currentGameDiskNumber) {
 				for (int i = 0; i < circles.size(); i++) {
 					if (circles.get(i).getId() != value) {
 						win = false;
@@ -470,8 +490,8 @@ public class GameView extends View {
 		}
 
 		if (win) {
-			if (turnListener != null) {
-				turnListener.gameFinished(nbCoups, nbCoupsRequis, (gameDuration + (System.currentTimeMillis() - lastGameReplayed)));
+			if (_turnListener != null) {
+				_turnListener.gameFinished(_currentGameMovesCount, _currentGameRequiredMinCount, (_currentGameSessionDuration + (System.currentTimeMillis() - _currentGameSavedDurationlastGame)));
 			}
 		}
 	}
@@ -486,48 +506,48 @@ public class GameView extends View {
 			ClassCircle selectedCircle = null;
 			ClassCircle belowCircle = null;
 			// get circle index
-			if (line != null && line[0] != null) {
-				int startX = line[0].x;
-				int endX = line[1] == null ? line[0].x : line[1].x;
+			if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null) {
+				int startX = _startAndEndTouchPoint[0].x;
+				int endX = _startAndEndTouchPoint[1] == null ? _startAndEndTouchPoint[0].x : _startAndEndTouchPoint[1].x;
 				if (startX <= _viewWidth * 1 / 3) {
-					selectedCircle = field.getTowers().get(0).getCircles().size() > 0 ? field.getTowers().get(0).getCircles().get(field.getTowers().get(0).getCircles().size() - 1) : null;
+					selectedCircle = _currentGameField.getTowers().get(0).getCircles().size() > 0 ? _currentGameField.getTowers().get(0).getCircles().get(_currentGameField.getTowers().get(0).getCircles().size() - 1) : null;
 				} else if (startX < _viewWidth * 2 / 3) {
-					selectedCircle = field.getTowers().get(1).getCircles().size() > 0 ? field.getTowers().get(1).getCircles().get(field.getTowers().get(1).getCircles().size() - 1) : null;
+					selectedCircle = _currentGameField.getTowers().get(1).getCircles().size() > 0 ? _currentGameField.getTowers().get(1).getCircles().get(_currentGameField.getTowers().get(1).getCircles().size() - 1) : null;
 				} else {
-					selectedCircle = field.getTowers().get(2).getCircles().size() > 0 ? field.getTowers().get(2).getCircles().get(field.getTowers().get(2).getCircles().size() - 1) : null;
+					selectedCircle = _currentGameField.getTowers().get(2).getCircles().size() > 0 ? _currentGameField.getTowers().get(2).getCircles().get(_currentGameField.getTowers().get(2).getCircles().size() - 1) : null;
 				}
 
 				if (endX <= _viewWidth * 1 / 3) {
-					belowCircle = field.getTowers().get(0).getCircles().size() > 0 ? field.getTowers().get(0).getCircles().get(field.getTowers().get(0).getCircles().size() - 1) : null;
+					belowCircle = _currentGameField.getTowers().get(0).getCircles().size() > 0 ? _currentGameField.getTowers().get(0).getCircles().get(_currentGameField.getTowers().get(0).getCircles().size() - 1) : null;
 				} else if (endX < _viewWidth * 2 / 3) {
-					belowCircle = field.getTowers().get(1).getCircles().size() > 0 ? field.getTowers().get(1).getCircles().get(field.getTowers().get(1).getCircles().size() - 1) : null;
+					belowCircle = _currentGameField.getTowers().get(1).getCircles().size() > 0 ? _currentGameField.getTowers().get(1).getCircles().get(_currentGameField.getTowers().get(1).getCircles().size() - 1) : null;
 				} else {
-					belowCircle = field.getTowers().get(2).getCircles().size() > 0 ? field.getTowers().get(2).getCircles().get(field.getTowers().get(2).getCircles().size() - 1) : null;
+					belowCircle = _currentGameField.getTowers().get(2).getCircles().size() > 0 ? _currentGameField.getTowers().get(2).getCircles().get(_currentGameField.getTowers().get(2).getCircles().size() - 1) : null;
 				}
 
 				if (selectedCircle != null) {
 					if (belowCircle == null || selectedCircle.getId() <= belowCircle.getId())
-						myPaint.setColor(selectedCircle.getColor());
+						_elementsPaint.setColor(selectedCircle.getColor());
 					else
-						myPaint.setColor(Color.DKGRAY);
-					myPaint.setAlpha(40);
+						_elementsPaint.setColor(Color.DKGRAY);
+					_elementsPaint.setAlpha(40);
 					int currentX = endX;
 					if (currentX <= _viewWidth * 1 / 3)
-						canvas.drawRect(0, 0, _viewWidth * 1 / 3, _viewHeight, myPaint);
+						canvas.drawRect(0, 0, _viewWidth * 1 / 3, _viewHeight, _elementsPaint);
 					else if (currentX < _viewWidth * 2 / 3)
-						canvas.drawRect(_viewWidth * 1 / 3, 0, _viewWidth * 2 / 3, _viewHeight, myPaint);
+						canvas.drawRect(_viewWidth * 1 / 3, 0, _viewWidth * 2 / 3, _viewHeight, _elementsPaint);
 					else
-						canvas.drawRect(_viewWidth * 2 / 3, 0, _viewWidth, _viewHeight, myPaint);
+						canvas.drawRect(_viewWidth * 2 / 3, 0, _viewWidth, _viewHeight, _elementsPaint);
 				}
 
-				myPaint.setColor(Color.rgb(0, 0, 0));
-				myPaint.setAlpha(255);
+				_elementsPaint.setColor(Color.rgb(0, 0, 0));
+				_elementsPaint.setAlpha(255);
 			}
 
-			if (currentMode == MODE_MULTIPLE) {
-				myPaint.setColor(Color.DKGRAY);
-				myPaint.setAlpha(40);
-				canvas.drawRect(_viewWidth * 2 / 3, 0, _viewWidth, _viewHeight, myPaint);
+			if (_currentGameMode == MODE_MULTIPLE) {
+				_elementsPaint.setColor(Color.DKGRAY);
+				_elementsPaint.setAlpha(40);
+				canvas.drawRect(_viewWidth * 2 / 3, 0, _viewWidth, _viewHeight, _elementsPaint);
 			}
 
 			if (selectedCircle == null)
@@ -536,125 +556,124 @@ public class GameView extends View {
 			int x = 0;
 			int y = _viewHeight;
 			int i = 1;
-			myPaint.setPathEffect(effect);
 
-			if (field != null) {
-				for (ClassTower tower : field.getTowers()) {
+			if (_currentGameField != null) {
+				for (ClassTower tower : _currentGameField.getTowers()) {
 					x = (_viewWidth * i / 3) - ((_viewWidth * 1 / 3) / 2);
 					y = _viewHeight;
 					for (ClassCircle cercle : tower.getCircles()) {
-						if (selectedCircle.getId() != cercle.getId()) {
-							int circleWidth = (_viewWidth * 1 / 3 - 10) * ((cercle.getId()) * 100 / nbCircles) / 100;
-							if (circleWidth == 0)
-								circleWidth = 2;
 
-							int circleHeight = Tools.convertDpToPixel(10.0f);
-							circleHeight = _viewWidth / 3 / 10;
+						int circleWidth = (_viewWidth * 1 / 3 - 10) * ((cercle.getId()) * 100 / _currentGameDiskNumber) / 100;
+						if (circleWidth == 0)
+							circleWidth = 2;
 
-							if (circleHeight * nbCircles > _viewHeight) {
-								circleHeight = (int) (_viewHeight * 0.95) / nbCircles;
-							}
+						int circleHeight = Tools.convertDpToPixel(10.0f);
+						circleHeight = _viewWidth / 3 / 10;
 
-							myPaint.setColor(cercle.getColor());
-							npdBounds.set(x - (circleWidth / 2), y - (circleHeight), x + (circleWidth / 2), y);
-
-							if (currentMode == MODE_GOAL && i == 1) {
-								myPaint.setAlpha(150);
-							} else {
-								myPaint.setAlpha(255);
-							}
-							canvas.drawRect(npdBounds, myPaint);
-							y -= circleHeight;
+						if (circleHeight * _currentGameDiskNumber > _viewHeight) {
+							circleHeight = (int) (_viewHeight * 0.95f) / _currentGameDiskNumber;
 						}
+
+						_elementsPaint.setColor(cercle.getColor());
+						_reusableRect.set(x - (circleWidth / 2), y - (circleHeight), x + (circleWidth / 2), y);
+
+						if (selectedCircle.getId() == cercle.getId() || (_currentGameMode == MODE_GOAL && i == 1)) {
+							_elementsPaint.setAlpha(selectedCircle.getId() == cercle.getId() ? 50 : 150);
+						} else {
+							_elementsPaint.setAlpha(255);
+						}
+						canvas.drawRect(_reusableRect, _elementsPaint);
+						y -= circleHeight;
+
 					}
 
 					if (i != 3) {
-						myPaint.setStrokeWidth(1);
-						myPaint.setColor(Color.parseColor("#AAAAAA"));
-						canvas.drawLine((_viewWidth * i / 3), 0, (_viewWidth * i / 3), _viewHeight, myPaint);
-						myPaint.setStrokeWidth(Tools.convertDpToPixel(1.0f));
+						_elementsPaint.setStrokeWidth(1);
+						_elementsPaint.setColor(Color.parseColor("#AAAAAA"));
+						canvas.drawLine((_viewWidth * i / 3), 0, (_viewWidth * i / 3), _viewHeight, _elementsPaint);
+						_elementsPaint.setStrokeWidth(Tools.convertDpToPixel(1.0f));
 					}
 					i++;
 				}
 			}
-			myPaint.setPathEffect(null);
+			_elementsPaint.setPathEffect(null);
 			int decalageTop = Tools.convertDpToPixel(18);
 
-			// draw line
-			if (!quickZoneTouched) {
-				myPaint.setColor(selectedCircle.getColor());
-				if (path != null) {
-					myPaint.setStyle(Paint.Style.STROKE);
-					canvas.drawPath(path, myPaint);
-					myPaint.setStyle(Paint.Style.FILL);
-				}
-			}
 			// draw selected circle
-			if (line != null && line[0] != null && selectedCircle.getId() != -1) {
-				int circleWidth = (_viewWidth * 1 / 3 - 10) * ((selectedCircle.getId()) * 100 / nbCircles) / 100;
+			if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1) {
+
+				// draw line
+				if (!_currentTouchIsInquickTouchZone) {
+					_fingerLinePaint.setColor(selectedCircle.getColor());
+					if (_fingerLinePath != null) {
+						canvas.drawPath(_fingerLinePath, _fingerLinePaint);
+					}
+				}
+
+				int circleWidth = (_viewWidth * 1 / 3 - 10) * ((selectedCircle.getId()) * 100 / _currentGameDiskNumber) / 100;
 				if (circleWidth == 0)
 					circleWidth = 2;
 
 				int circleHeight = Tools.convertDpToPixel(10.0f);
 				circleHeight = _viewWidth / 3 / 10;
 
-				if (circleHeight * nbCircles > _viewHeight) {
-					circleHeight = (int) (_viewHeight * 0.95) / nbCircles;
+				if (circleHeight * _currentGameDiskNumber > _viewHeight) {
+					circleHeight = (int) (_viewHeight * 0.95) / _currentGameDiskNumber;
 				}
 
-				if (line[1] != null) {
-					x = line[1].x;
-					y = line[1].y;
+				if (_startAndEndTouchPoint[1] != null) {
+					x = _startAndEndTouchPoint[1].x;
+					y = _startAndEndTouchPoint[1].y;
 				} else {
-					x = line[0].x;
-					y = line[0].y;
+					x = _startAndEndTouchPoint[0].x;
+					y = _startAndEndTouchPoint[0].y;
 				}
-				npdBounds.set(x - (circleWidth / 2), y - (circleHeight / 2), x + (circleWidth / 2), y + (circleHeight / 2));
-				myPaint.setColor(selectedCircle.getColor());
-				canvas.drawRect(npdBounds, myPaint);
+				_reusableRect.set(x - (circleWidth / 2), y - (circleHeight / 2), x + (circleWidth / 2), y + (circleHeight / 2));
+				_elementsPaint.setColor(selectedCircle.getColor());
+				canvas.drawRect(_reusableRect, _elementsPaint);
 
-				canvas.drawText(selectedCircle.getId() + "", _viewWidth - myPaint.measureText(selectedCircle.getId() + "") - Tools.convertDpToPixel(16.0f), decalageTop + Tools.convertDpToPixel(16.0f), myPaint);
+				canvas.drawText(selectedCircle.getId() + "", _viewWidth - _elementsPaint.measureText(selectedCircle.getId() + "") - Tools.convertDpToPixel(16.0f), decalageTop + Tools.convertDpToPixel(16.0f), _elementsPaint);
 			}
 
-			if (currentMode == MODE_MULTIPLE) {
+			if (_currentGameMode == MODE_MULTIPLE) {
 				x = _viewWidth / 6 * 5;
 				y = _viewHeight / 2;
 
 				ClassCircle circle2 = new ClassCircle(1, Color.parseColor("#99CC00"));
 				ClassCircle circle = new ClassCircle(2, Color.parseColor("#FF4444"));
 
-				int circleWidth = (_viewWidth * 1 / 3 - 10) * ((circle.getId()) * 100 / nbCircles) / 100;
+				int circleWidth = (_viewWidth * 1 / 3 - 10) * ((circle.getId()) * 100 / _currentGameDiskNumber) / 100;
 				if (circleWidth == 0)
 					circleWidth = 2;
 
 				int circleHeight = Tools.convertDpToPixel(10.0f);
 				circleHeight = _viewWidth / 3 / 10;
 
-				npdBounds.set(x - (circleWidth / 2), y - (circleHeight / 2), x + (circleWidth / 2), y + (circleHeight / 2));
-				myPaint.setColor(circle.getColor());
-				canvas.drawRect(npdBounds, myPaint);
+				_reusableRect.set(x - (circleWidth / 2), y - (circleHeight / 2), x + (circleWidth / 2), y + (circleHeight / 2));
+				_elementsPaint.setColor(circle.getColor());
+				canvas.drawRect(_reusableRect, _elementsPaint);
 
-				circleWidth = (_viewWidth * 1 / 3 - 10) * ((circle2.getId()) * 100 / nbCircles) / 100;
+				circleWidth = (_viewWidth * 1 / 3 - 10) * ((circle2.getId()) * 100 / _currentGameDiskNumber) / 100;
 				if (circleWidth == 0)
 					circleWidth = 2;
 
-				npdBounds.set(x - (circleWidth / 2), y - (circleHeight / 2) - circleHeight, x + (circleWidth / 2), y + (circleHeight / 2) - circleHeight);
-				myPaint.setColor(circle2.getColor());
-				canvas.drawRect(npdBounds, myPaint);
+				_reusableRect.set(x - (circleWidth / 2), y - (circleHeight / 2) - circleHeight, x + (circleWidth / 2), y + (circleHeight / 2) - circleHeight);
+				_elementsPaint.setColor(circle2.getColor());
+				canvas.drawRect(_reusableRect, _elementsPaint);
 			}
 
-			if (isBuildingQuickZone && eBuilding != null && dBuilding != null) {
+			if (_isBuildingQuickZone && _qtEndEdgeBuilding != null && _qtStartEdgeBuilding != null) {
 				int xx, yy, w, h;
-				xx = dBuilding.x < eBuilding.x ? dBuilding.x : eBuilding.x;
-				yy = dBuilding.y < eBuilding.y ? dBuilding.y : eBuilding.y;
+				xx = _qtStartEdgeBuilding.x < _qtEndEdgeBuilding.x ? _qtStartEdgeBuilding.x : _qtEndEdgeBuilding.x;
+				yy = _qtStartEdgeBuilding.y < _qtEndEdgeBuilding.y ? _qtStartEdgeBuilding.y : _qtEndEdgeBuilding.y;
 
-				w = Math.abs(dBuilding.x - eBuilding.x);
-				h = Math.abs(dBuilding.y - eBuilding.y);
-				myPaint.setColor(Color.parseColor("#AAAAAA"));
-				canvas.drawRect(xx, yy, xx + w, yy + h, myPaint);
+				w = Math.abs(_qtStartEdgeBuilding.x - _qtEndEdgeBuilding.x);
+				h = Math.abs(_qtStartEdgeBuilding.y - _qtEndEdgeBuilding.y);
+				_elementsPaint.setColor(Color.parseColor("#AAAAAA"));
+				canvas.drawRect(xx, yy, xx + w, yy + h, _elementsPaint);
 			}
 
-			if (helpLine) {
+			if (_shouldDrawHelpLine) {
 
 				Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 				mPaint.setColor(Color.parseColor(getContext().getString(R.color.primary_color)));
@@ -668,53 +687,51 @@ public class GameView extends View {
 				canvas.drawCircle(_viewWidth - Tools.convertDpToPixel(16.0f), _viewHeight / 2 + Tools.convertDpToPixel(40.0f), Tools.convertDpToPixel(8), mPaint);
 			}
 
-			if (field != null && field.getQt() != null) {
+			if (_currentGameField != null && _currentGameField.getQt() != null) {
 				int t, w, h, l;
-				t = field.getQt().getTop();
-				w = field.getQt().getWidth();
-				h = field.getQt().getHeight();
-				l = field.getQt().getLeft();
+				t = _currentGameField.getQt().getTop();
+				w = _currentGameField.getQt().getWidth();
+				h = _currentGameField.getQt().getHeight();
+				l = _currentGameField.getQt().getLeft();
 
-				if (quickZoneTouched && line != null && line[0] != null) {
-					if (line[1] != null) {
-						x = line[1].x;
-						y = line[1].y;
+				if (_currentTouchIsInquickTouchZone && _startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null) {
+					if (_startAndEndTouchPoint[1] != null) {
+						x = _startAndEndTouchPoint[1].x;
+						y = _startAndEndTouchPoint[1].y;
 					} else {
-						x = line[0].x;
-						y = line[0].y;
+						x = _startAndEndTouchPoint[0].x;
+						y = _startAndEndTouchPoint[0].y;
 					}
 
 					if (x < _viewWidth / 3) {
-						npdBounds.set(l, t, l + (w / 3), t + h);
+						_reusableRect.set(l, t, l + (w / 3), t + h);
 					} else if (x < _viewWidth / 3 + _viewWidth / 3) {
-						npdBounds.set(l + (w / 3), t, l + (w / 3) + (w / 3), t + h);
+						_reusableRect.set(l + (w / 3), t, l + (w / 3) + (w / 3), t + h);
 					} else {
-						npdBounds.set(l + (w / 3) + (w / 3), t, l + (w / 3) + (w / 3) + (w / 3), t + h);
+						_reusableRect.set(l + (w / 3) + (w / 3), t, l + (w / 3) + (w / 3) + (w / 3), t + h);
 					}
-					if (line != null && line[0] != null && selectedCircle.getId() != -1) {
-						myPaint.setColor(selectedCircle.getColor());
+					if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1) {
+						_elementsPaint.setColor(selectedCircle.getColor());
 					} else {
-						myPaint.setColor(Color.parseColor("#AAAAAA"));
+						_elementsPaint.setColor(Color.parseColor("#AAAAAA"));
 					}
-					myPaint.setAlpha(150);
-					canvas.drawRect(npdBounds, myPaint);
-					myPaint.setAlpha(255);
+					_elementsPaint.setAlpha(150);
+					canvas.drawRect(_reusableRect, _elementsPaint);
+					_elementsPaint.setAlpha(255);
 				}
-				if (line != null && line[0] != null && selectedCircle.getId() != -1 && quickZoneTouched) {
-					myPaint.setColor(selectedCircle.getColor());
+				if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1 && _currentTouchIsInquickTouchZone) {
+					_elementsPaint.setColor(selectedCircle.getColor());
 				} else {
-					myPaint.setColor(Color.parseColor("#AAAAAA"));
+					_elementsPaint.setColor(Color.parseColor("#AAAAAA"));
 				}
 
-				myPaint.setPathEffect(effect);
-				canvas.drawLine(l + w / 3, t, l + w / 3, t + h, myPaint);
-				canvas.drawLine(l + w * 2 / 3, t, l + w * 2 / 3, t + h, myPaint);
-				myPaint.setPathEffect(null);
+				canvas.drawLine(l + w / 3, t, l + w / 3, t + h, _elementsPaint);
+				canvas.drawLine(l + w * 2 / 3, t, l + w * 2 / 3, t + h, _elementsPaint);
+				_elementsPaint.setPathEffect(null);
 
-				myPaint.setStyle(Paint.Style.STROKE);
-				canvas.drawRect(l, t, l + w, t + h, myPaint);
-				myPaint.setStyle(Paint.Style.FILL);
-
+				_elementsPaint.setStyle(Paint.Style.STROKE);
+				canvas.drawRect(l, t, l + w, t + h, _elementsPaint);
+				_elementsPaint.setStyle(Paint.Style.FILL);
 			}
 		}
 	}
@@ -751,49 +768,29 @@ public class GameView extends View {
 
 		_viewHeight = height;
 		_viewWidth = width;
+
 		setMeasuredDimension(width, height);
-	}
-
-	public TurnListener getTurnListener() {
-		return turnListener;
-	}
-
-	public void setTurnListener(TurnListener turnListener) {
-		this.turnListener = turnListener;
-	}
-
-	public void setDisabled(boolean disabled) {
-		this.disabled = disabled;
-	}
-
-	public HelpListener getHelpListener() {
-		return helpListener;
-	}
-
-	public void setHelpListener(HelpListener helpListener) {
-		this.helpListener = helpListener;
 	}
 
 	public void setDemoMode(int mode) {
 		createNewGame(5);
-		currentMode = mode;
+		_currentGameMode = mode;
 
 		if (mode == MODE_SIZE) {
-
-			field.getTowers().get(0).getCircles().remove(4);
-			field.getTowers().get(0).getCircles().remove(3);
+			_currentGameField.getTowers().get(0).getCircles().remove(4);
+			_currentGameField.getTowers().get(0).getCircles().remove(3);
 
 			ClassCircle circle = new ClassCircle(1, Color.parseColor("#99CC00"));
-			field.getTowers().get(1).getCircles().add(circle);
+			_currentGameField.getTowers().get(1).getCircles().add(circle);
 			circle = new ClassCircle(2, Color.parseColor("#FF4444"));
-			field.getTowers().get(1).getCircles().add(circle);
+			_currentGameField.getTowers().get(1).getCircles().add(circle);
 		} else if (mode == MODE_GOAL) {
-			for (int i = 0; i < field.getTowers().get(0).getCircles().size(); i++) {
-				field.getTowers().get(2).getCircles().add(field.getTowers().get(0).getCircles().get(i));
+			for (int i = 0; i < _currentGameField.getTowers().get(0).getCircles().size(); i++) {
+				_currentGameField.getTowers().get(2).getCircles().add(_currentGameField.getTowers().get(0).getCircles().get(i));
 			}
 		} else if (mode == MODE_MULTIPLE) {
-			field.getTowers().get(0).getCircles().remove(4);
-			field.getTowers().get(0).getCircles().remove(3);
+			_currentGameField.getTowers().get(0).getCircles().remove(4);
+			_currentGameField.getTowers().get(0).getCircles().remove(3);
 		}
 
 		invalidate();
@@ -801,17 +798,53 @@ public class GameView extends View {
 
 	public void activateQuickTouchMode() {
 
-		if (isBuildingQuickZone || field.getQt() != null) {
-			field.setQt(null);
-			isBuildingQuickZone = false;
+		if (_isBuildingQuickZone || _currentGameField.getQt() != null) {
+			_currentGameField.setQt(null);
+			_isBuildingQuickZone = false;
 		} else {
-			isBuildingQuickZone = true;
+			_isBuildingQuickZone = true;
 		}
 		this.invalidate();
 	}
 
-	public void drawHelpLine(boolean b) {
-		this.helpLine = b;
+	public boolean getDrawHelpLine() {
+		return _shouldDrawHelpLine;
+	}
+
+	public void setDrawHelpLine(boolean drawHelpLine) {
+		this._shouldDrawHelpLine = drawHelpLine;
 		invalidate();
+	}
+
+	public TurnListener getTurnListener() {
+		return _turnListener;
+	}
+
+	public void setTurnListener(TurnListener turnListener) {
+		this._turnListener = turnListener;
+	}
+
+	public void setDisabled(boolean disabled) {
+		this._isTouchDisabled = disabled;
+	}
+
+	public HelpListener getHelpListener() {
+		return _helpListener;
+	}
+
+	public void setHelpListener(HelpListener helpListener) {
+		this._helpListener = helpListener;
+	}
+
+	public QuickTouch getQt() {
+		if (_currentGameField != null)
+			return _currentGameField.getQt();
+		else
+			return null;
+	}
+
+	public void setQt(QuickTouch qt) {
+		if (_currentGameField != null)
+			_currentGameField.setQt(qt);
 	}
 }
