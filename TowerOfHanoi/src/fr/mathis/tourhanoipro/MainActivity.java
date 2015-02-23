@@ -50,6 +50,7 @@ import fr.mathis.tourhanoipro.adapter.DisksSpinnerAdapter;
 import fr.mathis.tourhanoipro.interfaces.HelpListener;
 import fr.mathis.tourhanoipro.interfaces.TurnListener;
 import fr.mathis.tourhanoipro.tools.DataManager;
+import fr.mathis.tourhanoipro.tools.Tools;
 import fr.mathis.tourhanoipro.views.GameView;
 
 public class MainActivity extends ActionBarActivity implements TurnListener, ConnectionCallbacks, OnConnectionFailedListener {
@@ -393,6 +394,12 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 				step1.setVisibility(View.GONE);
 				step2.setVisibility(View.GONE);
 
+				float dpWidth = getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density;
+				if (dpWidth > 400)
+					stepContainer.getLayoutParams().width = Tools.convertDpToPixel(300);
+				else
+					findViewById(R.id.rl_help).getLayoutParams().width = -1;
+
 				ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(stepContainer, "alpha", 0.0f, 1.0f);
 				alphaAnimator.setDuration(500);
 				alphaAnimator.start();
@@ -615,10 +622,18 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		if (mDrawerToggle != null)
 			mDrawerToggle.onConfigurationChanged(newConfig);
 		nextIconForSmallTouchMenu = R.drawable.ic_action_smalltouch;
-		menuItemSmallTouch.setIcon(nextIconForSmallTouchMenu);
-		menuItemSmallTouch.setTitle(R.string.s49);
+		if (menuItemSmallTouch != null) {
+			menuItemSmallTouch.setIcon(nextIconForSmallTouchMenu);
+			menuItemSmallTouch.setTitle(R.string.s49);
+		}
 		currentGame.resetQuickTouchZone();
 		getSupportActionBar().setTitle("");
+
+		float dpWidth = getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density;
+		if (dpWidth > 400)
+			findViewById(R.id.rl_help).getLayoutParams().width = Tools.convertDpToPixel(300);
+		else
+			findViewById(R.id.rl_help).getLayoutParams().width = -1;
 	}
 
 	@Override

@@ -596,7 +596,6 @@ public class GameView extends View {
 					i++;
 				}
 			}
-			_elementsPaint.setPathEffect(null);
 			int decalageTop = Tools.convertDpToPixel(18);
 
 			// draw selected circle
@@ -727,7 +726,6 @@ public class GameView extends View {
 
 				canvas.drawLine(l + w / 3, t, l + w / 3, t + h, _elementsPaint);
 				canvas.drawLine(l + w * 2 / 3, t, l + w * 2 / 3, t + h, _elementsPaint);
-				_elementsPaint.setPathEffect(null);
 
 				_elementsPaint.setStyle(Paint.Style.STROKE);
 				canvas.drawRect(l, t, l + w, t + h, _elementsPaint);
