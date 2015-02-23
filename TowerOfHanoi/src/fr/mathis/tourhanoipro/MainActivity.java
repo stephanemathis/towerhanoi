@@ -45,7 +45,6 @@ import com.google.example.games.basegameutils.BaseGameUtils;
 import com.nineoldandroids.animation.Animator;
 import com.nineoldandroids.animation.Animator.AnimatorListener;
 import com.nineoldandroids.animation.ObjectAnimator;
-import com.nineoldandroids.animation.ValueAnimator;
 
 import fr.mathis.tourhanoipro.adapter.DisksSpinnerAdapter;
 import fr.mathis.tourhanoipro.interfaces.HelpListener;
@@ -166,7 +165,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 						} else if (pendingDrawerAction == DRAWER_TUTO) {
 							showTutorial(true);
 							DataManager.MemorizeValue("helpCompleted", false, getApplicationContext());
-							DataManager.MemorizeValue("discoveredRightDrawer", false, getApplicationContext());
+							DataManager.MemorizeValue("shownRightDrawerAfterFirstNewGame", false, getApplicationContext());
 						} else if (pendingDrawerAction == DRAWER_ACHIEVEMENTS) {
 							if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 								startActivityForResult(Games.Achievements.getAchievementsIntent(mGoogleApiClient), RESULT_ACHIVEMENTS);
@@ -224,8 +223,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 
 				public void onDrawerOpened(View drawerView) {
 					if (drawerView == rightDrawer) {
-						DataManager.MemorizeValue("discoveredRightDrawer", true, getApplicationContext());
-						findViewById(R.id.v_swype_indicator).setVisibility(View.GONE);
+						DataManager.MemorizeValue("shownRightDrawerAfterFirstNewGame", true, getApplicationContext());
 					}
 				}
 
@@ -814,15 +812,9 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		menuItemSmallTouch.setTitle(R.string.s49);
 		adapter.notifyDataSetChanged();
 
-		if (!isSlideLock && !DataManager.GetMemorizedValueBoolean("discoveredRightDrawer", getApplicationContext())) {
-			if (findViewById(R.id.v_swype_indicator) != null) {
-				findViewById(R.id.v_swype_indicator).setVisibility(View.VISIBLE);
-				ObjectAnimator alphaAnimator = ObjectAnimator.ofFloat(findViewById(R.id.v_swype_indicator), "alpha", 0.0f, 0.75f);
-				alphaAnimator.setDuration(1000);
-				alphaAnimator.setRepeatCount(ValueAnimator.INFINITE);
-				alphaAnimator.setRepeatMode(ValueAnimator.REVERSE);
-				alphaAnimator.start();
-			}
+		String[] saveValueSplit = sOldGame.split(";");
+		if (!saveValueSplit[0].endsWith(":n:n") && !DataManager.GetMemorizedValueBoolean("shownRightDrawerAfterFirstNewGame", getApplicationContext())) {
+			mDrawerLayout.openDrawer(rightDrawer);
 		}
 
 		animateGame.setVisibility(View.VISIBLE);
