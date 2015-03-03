@@ -815,6 +815,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	@SuppressLint("NewApi")
 	public void restartGame() {
 
+		boolean oldGameIsContinuable = !(currentGame.isJustStarted() || currentGame.isFinished());
 		String sOldGame = currentGame.saveGameAsString();
 		allGames.set(currentGameIndex, sOldGame);
 		currentGame.createNewGame();
@@ -828,8 +829,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		menuItemSmallTouch.setTitle(R.string.s49);
 		adapter.notifyDataSetChanged();
 
-		String[] saveValueSplit = sOldGame.split(";");
-		if (!saveValueSplit[0].endsWith(":n:n") && !DataManager.GetMemorizedValueBoolean("shownRightDrawerAfterFirstNewGame", getApplicationContext())) {
+		if (oldGameIsContinuable && !DataManager.GetMemorizedValueBoolean("shownRightDrawerAfterFirstNewGame", getApplicationContext())) {
 			AlertDialog.Builder builder = new AlertDialog.Builder(this);
 			builder.setTitle(R.string.s85).setMessage(R.string.s86).setCancelable(false).setPositiveButton(R.string.s87, new DialogInterface.OnClickListener() {
 				public void onClick(DialogInterface dialog, int id) {

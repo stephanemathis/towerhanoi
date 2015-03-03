@@ -18,7 +18,6 @@ import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.games.Games;
 import com.nineoldandroids.animation.ObjectAnimator;
-import com.nineoldandroids.animation.ValueAnimator;
 
 import fr.mathis.tourhanoipro.adapter.TutoPagerAdapter;
 import fr.mathis.tourhanoipro.views.CustomPagerIndicator;
@@ -28,10 +27,8 @@ public class TutoActivity extends ActionBarActivity implements OnPageChangeListe
 	ViewPager pager;
 	TextView tvStep;
 	CustomPagerIndicator cpi;
-	View vSwypeIndicator;
 	View vBottomContainer;
 	View vBottomSeparator;
-	ObjectAnimator alphaAnimator;
 	GoogleApiClient mGoogleApiClient;
 
 	@SuppressLint("NewApi")
@@ -50,7 +47,6 @@ public class TutoActivity extends ActionBarActivity implements OnPageChangeListe
 
 		pager = (ViewPager) findViewById(R.id.tuto_pager);
 		tvStep = (TextView) findViewById(R.id.tv_step);
-		vSwypeIndicator = findViewById(R.id.v_swype_indicator);
 		vBottomContainer = findViewById(R.id.rl_indicator_container);
 		vBottomSeparator = findViewById(R.id.ll_indicator_separator);
 
@@ -68,12 +64,6 @@ public class TutoActivity extends ActionBarActivity implements OnPageChangeListe
 		});
 
 		cpi = (CustomPagerIndicator) findViewById(R.id.cpi_pager_indicator);
-
-		alphaAnimator = ObjectAnimator.ofFloat(vSwypeIndicator, "alpha", 0.0f, 0.75f);
-		alphaAnimator.setDuration(1000);
-		alphaAnimator.setRepeatCount(ValueAnimator.INFINITE);
-		alphaAnimator.setRepeatMode(ValueAnimator.REVERSE);
-		alphaAnimator.start();
 	}
 
 	@Override
@@ -103,8 +93,6 @@ public class TutoActivity extends ActionBarActivity implements OnPageChangeListe
 	@SuppressLint("NewApi")
 	@Override
 	public void onPageSelected(int pos) {
-		if (alphaAnimator != null)
-			alphaAnimator.cancel();
 
 		if (pos + 1 == TutoPagerAdapter.NB_STEPS) {
 			tvStep.setText(R.string.s52);

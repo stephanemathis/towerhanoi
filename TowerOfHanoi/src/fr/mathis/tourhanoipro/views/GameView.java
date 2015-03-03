@@ -845,4 +845,12 @@ public class GameView extends View {
 		if (_currentGameField != null)
 			_currentGameField.setQt(qt);
 	}
+
+	public boolean isJustStarted() {
+		return _currentGameField.getTowers().get(0).getCircles().size() == _currentGameDiskNumber;
+	}
+
+	public boolean isFinished() {
+		return _currentGameField.getTowers().get(1).getCircles().size() == _currentGameDiskNumber || _currentGameField.getTowers().get(2).getCircles().size() == _currentGameDiskNumber;
+	}
 }

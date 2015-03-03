@@ -3,25 +3,12 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <RelativeLayout
+    <android.support.v4.view.ViewPager
+        android:id="@+id/tuto_pager"
         android:layout_width="fill_parent"
         android:layout_height="0dp"
         android:layout_weight="1" >
-
-        <android.support.v4.view.ViewPager
-            android:id="@+id/tuto_pager"
-            android:layout_width="fill_parent"
-            android:layout_height="fill_parent" >
-        </android.support.v4.view.ViewPager>
-
-        <View
-            android:id="@+id/v_swype_indicator"
-            android:layout_width="1dp"
-            android:layout_height="fill_parent"
-            android:layout_alignParentRight="true"
-            android:background="#fff" >
-        </View>
-    </RelativeLayout>
+    </android.support.v4.view.ViewPager>
 
     <View
         android:id="@+id/ll_indicator_separator"
