@@ -3,6 +3,8 @@ package fr.mathis.tourhanoipro;
 import java.util.ArrayList;
 
 import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
@@ -271,7 +273,6 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 					int error = GooglePlayServicesUtil.isGooglePlayServicesAvailable(MainActivity.this);
 					if (error == ConnectionResult.SUCCESS)
 						mGoogleApiClient = new GoogleApiClient.Builder(MainActivity.this).addConnectionCallbacks(MainActivity.this).addOnConnectionFailedListener(MainActivity.this).addApi(Games.API).addScope(Games.SCOPE_GAMES).build();
-
 				}
 
 				if (mGoogleApiClient != null)
@@ -829,7 +830,14 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 
 		String[] saveValueSplit = sOldGame.split(";");
 		if (!saveValueSplit[0].endsWith(":n:n") && !DataManager.GetMemorizedValueBoolean("shownRightDrawerAfterFirstNewGame", getApplicationContext())) {
-			mDrawerLayout.openDrawer(rightDrawer);
+			AlertDialog.Builder builder = new AlertDialog.Builder(this);
+			builder.setTitle(R.string.s85).setMessage(R.string.s86).setCancelable(false).setPositiveButton(R.string.s87, new DialogInterface.OnClickListener() {
+				public void onClick(DialogInterface dialog, int id) {
+					mDrawerLayout.openDrawer(rightDrawer);
+				}
+			});
+			AlertDialog alert = builder.create();
+			alert.show();
 		}
 
 		animateGame.setVisibility(View.VISIBLE);

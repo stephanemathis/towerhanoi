@@ -35,4 +35,7 @@
 	<string name="s82">Need help ?</string>
 	<string name="s83">Draw a line on the screen,\nfollow the purple line</string>
 	<string name="s84">Move your finder inside the ractangle to control the game !</string>
+	<string name="s85">Saved games</string>
+	<string name="s86">You are about to start a new game.\nYou can select and continue the current game at any moment by opening the right menu.</string>
+	<string name="s87">OK</string>
 </resources>
