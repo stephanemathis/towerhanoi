@@ -257,9 +257,11 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 
 				@Override
 				public void onDrawerSlide(View drawerView, float slideOffset) {
-					// if (drawerView == leftDrawer) {
-					super.onDrawerSlide(drawerView, slideOffset);
-					// }
+					if (slideOffset < 0.1)
+						currentGame.cleanTouch();
+					if (drawerView == leftDrawer) {
+						super.onDrawerSlide(drawerView, slideOffset);
+					}
 				}
 			};
 			mDrawerLayout.setDrawerListener(mDrawerToggle);
