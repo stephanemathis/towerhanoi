@@ -1,6 +1,7 @@
 package fr.mathis.tourhanoipro;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -51,6 +52,7 @@ import com.nineoldandroids.animation.ObjectAnimator;
 import fr.mathis.tourhanoipro.adapter.DisksSpinnerAdapter;
 import fr.mathis.tourhanoipro.interfaces.HelpListener;
 import fr.mathis.tourhanoipro.interfaces.TurnListener;
+import fr.mathis.tourhanoipro.listener.SwipeToDismissTouchListener;
 import fr.mathis.tourhanoipro.tools.DataManager;
 import fr.mathis.tourhanoipro.tools.Tools;
 import fr.mathis.tourhanoipro.views.GameView;
@@ -149,6 +151,26 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		rvSavedGames.setHasFixedSize(true);
 		adapter = new GameAdapter(LayoutInflater.from(this));
 		rvSavedGames.setAdapter(adapter);
+
+		SwipeToDismissTouchListener swipeToDismissTouchListener = new SwipeToDismissTouchListener(rvSavedGames, new SwipeToDismissTouchListener.DismissCallbacks() {
+			@Override
+			public SwipeToDismissTouchListener.SwipeDirection canDismiss(int position) {
+				return SwipeToDismissTouchListener.SwipeDirection.LEFT;
+			}
+
+			@Override
+			public void onDismiss(RecyclerView view, List<SwipeToDismissTouchListener.PendingDismissData> dismissData) {
+				for (SwipeToDismissTouchListener.PendingDismissData data : dismissData) {
+					allGames.remove(data.position);
+					adapter.notifyItemRemoved(data.position);
+					if (data.position < 2) {
+						adapter.notifyItemChanged(0);
+						adapter.notifyItemChanged(1);
+					}
+				}
+			}
+		});
+		rvSavedGames.addOnItemTouchListener(swipeToDismissTouchListener);
 	}
 
 	private void initDrawer() {
@@ -222,25 +244,22 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 					}
 
 					rvSavedGames.scrollToPosition(currentGameIndex);
+
+					showClosedIcon();
 				}
 
 				public void onDrawerOpened(View drawerView) {
 					if (drawerView == rightDrawer) {
 						DataManager.MemorizeValue("shownRightDrawerAfterFirstNewGame", true, getApplicationContext());
 					}
+					showOpenedIcon();
 				}
 
 				@Override
 				public void onDrawerSlide(View drawerView, float slideOffset) {
-					if (slideOffset > 0.1)
-						showOpenedIcon();
-					else {
-						showClosedIcon();
-					}
-
-					if (drawerView == leftDrawer) {
-						super.onDrawerSlide(drawerView, slideOffset);
-					}
+					// if (drawerView == leftDrawer) {
+					super.onDrawerSlide(drawerView, slideOffset);
+					// }
 				}
 			};
 			mDrawerLayout.setDrawerListener(mDrawerToggle);
@@ -518,14 +537,15 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	}
 
 	private void showClosedIcon() {
-		showMenu = true;
-		supportInvalidateOptionsMenu();
 		if (isSlideLock && mDrawerLayout != null)
 			mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);
 		getSupportActionBar().setTitle(actionBarSubtitle);
 		if (mDrawerToggle != null)
 			mDrawerToggle.syncState();
 		currentGame.cleanTouch();
+
+		showMenu = true;
+		supportInvalidateOptionsMenu();
 	}
 
 	private void showOpenedIcon() {
@@ -535,15 +555,15 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			getSupportActionBar().setTitle("");
 		}
 
-		showMenu = false;
-		supportInvalidateOptionsMenu();
-
 		if (isSlideLock && mDrawerLayout != null)
 			mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);
 
 		if (mDrawerToggle != null)
 			mDrawerToggle.syncState();
 		currentGame.cleanTouch();
+
+		showMenu = false;
+		supportInvalidateOptionsMenu();
 	}
 
 	private void closeDrawer() {
@@ -555,9 +575,14 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	public boolean onCreateOptionsMenu(Menu menu) {
 		menuItemSmallTouch = menu.add(0, MENU_QUICK_TOUCH, 0, R.string.s49).setIcon(R.drawable.ic_action_smalltouch);
 		MenuItemCompat.setShowAsAction(menuItemSmallTouch, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+
 		menuItemDeconnection = menu.add(0, MENU_DECONNECT, 0, R.string.s41).setVisible(mGoogleApiClient != null && mGoogleApiClient.isConnected());
-		openRightDrawer = menu.add(0, MENU_RIGHT_DRAWER, 0, R.string.s70);
+		menuItemDeconnection.setVisible((mDrawerLayout == null || mDrawerLayout.isDrawerOpen(leftDrawer)) && mGoogleApiClient != null && mGoogleApiClient.isConnected());
+
+		openRightDrawer = menu.add(0, MENU_RIGHT_DRAWER, 1, R.string.s70).setIcon(R.drawable.ic_action_communication_clear_all);
+		MenuItemCompat.setShowAsAction(openRightDrawer, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
 		openRightDrawer.setVisible(isSlideLock);
+
 		return true;
 	}
 
@@ -565,6 +590,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	public boolean onPrepareOptionsMenu(Menu menu) {
 		menu.findItem(MENU_QUICK_TOUCH).setVisible(showMenu);
 		menu.findItem(MENU_RIGHT_DRAWER).setVisible(showMenu && isSlideLock);
+		menu.findItem(MENU_DECONNECT).setVisible((mDrawerLayout == null || mDrawerLayout.isDrawerOpen(leftDrawer)) && mGoogleApiClient != null && mGoogleApiClient.isConnected());
 		return super.onPrepareOptionsMenu(menu);
 	}
 
@@ -913,7 +939,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			findViewById(R.id.sign_in_panel).setClickable(false);
 			findViewById(R.id.sign_in_panel).setFocusable(false);
 			if (menuItemDeconnection != null)
-				menuItemDeconnection.setVisible(true);
+				menuItemDeconnection.setVisible((mDrawerLayout == null || mDrawerLayout.isDrawerOpen(leftDrawer)) && mGoogleApiClient != null && mGoogleApiClient.isConnected());
 
 			LinearLayout c = (LinearLayout) findViewById(R.id.container_play);
 			c.setBackgroundColor(Color.parseColor("#FAFAFA"));
@@ -1035,8 +1061,10 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 						int index = allGames.indexOf(gameAtCurrentPosition);
 						allGames.remove(index);
 						notifyItemRemoved(index);
-						notifyItemChanged(0);
-						notifyItemChanged(1);
+						if (index < 2) {
+							notifyItemChanged(0);
+							notifyItemChanged(1);
+						}
 					}
 					return true;
 				}
