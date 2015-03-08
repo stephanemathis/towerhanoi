@@ -155,6 +155,8 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		SwipeToDismissTouchListener swipeToDismissTouchListener = new SwipeToDismissTouchListener(rvSavedGames, new SwipeToDismissTouchListener.DismissCallbacks() {
 			@Override
 			public SwipeToDismissTouchListener.SwipeDirection canDismiss(int position) {
+				if (position == 0)
+					return SwipeToDismissTouchListener.SwipeDirection.NONE;
 				return SwipeToDismissTouchListener.SwipeDirection.LEFT;
 			}
 
@@ -597,7 +599,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		nextIconForSmallTouchMenu = nextIconForSmallTouchMenu == R.drawable.ic_action_smalltouch_disactivate ? R.drawable.ic_action_smalltouch : R.drawable.ic_action_smalltouch_disactivate;
 		menu.findItem(MENU_QUICK_TOUCH).setIcon(nextIconForSmallTouchMenu);
 		menu.findItem(MENU_QUICK_TOUCH).setTitle(nextIconForSmallTouchMenu == R.drawable.ic_action_smalltouch_disactivate ? R.string.s50 : R.string.s49);
-		
+
 		return super.onPrepareOptionsMenu(menu);
 	}
 
@@ -949,7 +951,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 				menuItemDeconnection.setVisible((mDrawerLayout == null || mDrawerLayout.isDrawerOpen(leftDrawer)) && mGoogleApiClient != null && mGoogleApiClient.isConnected());
 
 			LinearLayout c = (LinearLayout) findViewById(R.id.container_play);
-			c.setBackgroundColor(Color.parseColor("#FAFAFA"));
+			c.setBackgroundColor(Color.parseColor("#FFFFFF"));
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.HONEYCOMB) {
 				c.setAlpha(1);
 			}
@@ -1029,11 +1031,14 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			if (pos == 0) {
 				tvSectionTitle.setText(R.string.s72);
 				tvSectionTitle.setVisibility(View.VISIBLE);
+				gv.setBackgroundColor(Color.LTGRAY);
 			} else if (pos == 1) {
 				tvSectionTitle.setText(R.string.s73);
 				tvSectionTitle.setVisibility(View.VISIBLE);
+				gv.setBackgroundColor(Color.WHITE);
 			} else {
 				tvSectionTitle.setVisibility(View.GONE);
+				gv.setBackgroundColor(Color.WHITE);
 			}
 
 			final String gameAtCurrentPosition = allGames.get(pos);

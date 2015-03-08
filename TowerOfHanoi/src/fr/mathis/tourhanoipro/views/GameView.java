@@ -46,6 +46,7 @@ public class GameView extends View {
 	boolean _shouldDrawHelpLine;
 	int _currentGameMode;
 	boolean _isTouchDisabled;
+	int _backgroundColor;
 
 	// draw variables
 	int _viewHeight;
@@ -85,15 +86,16 @@ public class GameView extends View {
 		_isBuildingQuickZone = false;
 		_currentTouchIsInquickTouchZone = false;
 		_reusableRect = new Rect(0, 0, 0, 0);
+		_backgroundColor = Color.WHITE;
 
 		_elementsPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 		_elementsPaint.setStyle(Paint.Style.FILL);
-		_elementsPaint.setTextSize(Tools.convertDpToPixel(32));
 		_elementsPaint.setStrokeWidth(Tools.convertDpToPixel(1.0f));
 		_elementsPaint.setDither(true);
 		_elementsPaint.setStrokeJoin(Paint.Join.ROUND);
 		_elementsPaint.setStrokeCap(Paint.Cap.ROUND);
 		_elementsPaint.setAntiAlias(true);
+		_elementsPaint.setTextSize(Tools.convertDpToPixel(32));
 
 		_fingerLinePaint = new Paint();
 		_fingerLinePaint.setAntiAlias(true);
@@ -501,7 +503,7 @@ public class GameView extends View {
 	public void onDraw(Canvas canvas) {
 		if (canvas != null) {
 
-			canvas.drawColor(Color.parseColor("#E8E8E8"));
+			canvas.drawColor(_backgroundColor);
 
 			ClassCircle selectedCircle = null;
 			ClassCircle belowCircle = null;
@@ -578,7 +580,7 @@ public class GameView extends View {
 						_reusableRect.set(x - (circleWidth / 2), y - (circleHeight), x + (circleWidth / 2), y);
 
 						if (selectedCircle.getId() == cercle.getId() || (_currentGameMode == MODE_GOAL && i == 1)) {
-							_elementsPaint.setAlpha(selectedCircle.getId() == cercle.getId() ? 50 : 150);
+							_elementsPaint.setAlpha(selectedCircle.getId() == cercle.getId() ? 40 : 150);
 						} else {
 							_elementsPaint.setAlpha(255);
 						}
@@ -596,7 +598,6 @@ public class GameView extends View {
 					i++;
 				}
 			}
-			int decalageTop = Tools.convertDpToPixel(18);
 
 			// draw selected circle
 			if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1) {
@@ -631,7 +632,7 @@ public class GameView extends View {
 				_elementsPaint.setColor(selectedCircle.getColor());
 				canvas.drawRect(_reusableRect, _elementsPaint);
 
-				canvas.drawText(selectedCircle.getId() + "", _viewWidth - _elementsPaint.measureText(selectedCircle.getId() + "") - Tools.convertDpToPixel(16.0f), decalageTop + Tools.convertDpToPixel(16.0f), _elementsPaint);
+				canvas.drawText(selectedCircle.getId() + "", _viewWidth - _elementsPaint.measureText(selectedCircle.getId() + "") - Tools.convertDpToPixel(16.0f), Tools.convertDpToPixel(34.0f), _elementsPaint);
 			}
 
 			if (_currentGameMode == MODE_MULTIPLE) {
@@ -673,7 +674,6 @@ public class GameView extends View {
 			}
 
 			if (_shouldDrawHelpLine) {
-
 				Paint mPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
 				mPaint.setColor(Color.parseColor(getContext().getString(R.color.primary_color)));
 				mPaint.setStyle(Paint.Style.STROKE);
@@ -693,6 +693,10 @@ public class GameView extends View {
 				h = _currentGameField.getQt().getHeight();
 				l = _currentGameField.getQt().getLeft();
 
+				_elementsPaint.setColor(Color.WHITE);
+
+				canvas.drawRect(l, t, l + w, t + h, _elementsPaint);
+
 				if (_currentTouchIsInquickTouchZone && _startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null) {
 					if (_startAndEndTouchPoint[1] != null) {
 						x = _startAndEndTouchPoint[1].x;
@@ -711,12 +715,11 @@ public class GameView extends View {
 					}
 					if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1) {
 						_elementsPaint.setColor(selectedCircle.getColor());
-					} else {
-						_elementsPaint.setColor(Color.parseColor("#AAAAAA"));
+
+						_elementsPaint.setAlpha(150);
+						canvas.drawRect(_reusableRect, _elementsPaint);
+						_elementsPaint.setAlpha(255);
 					}
-					_elementsPaint.setAlpha(150);
-					canvas.drawRect(_reusableRect, _elementsPaint);
-					_elementsPaint.setAlpha(255);
 				}
 				if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1 && _currentTouchIsInquickTouchZone) {
 					_elementsPaint.setColor(selectedCircle.getColor());
@@ -792,6 +795,12 @@ public class GameView extends View {
 		}
 
 		invalidate();
+	}
+
+	@Override
+	public void setBackgroundColor(int color) {
+		_backgroundColor = color;
+		super.setBackgroundColor(color);
 	}
 
 	public void activateQuickTouchMode() {
