@@ -575,10 +575,10 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		menuItemSmallTouch = menu.add(0, MENU_QUICK_TOUCH, 0, R.string.s49).setIcon(R.drawable.ic_action_smalltouch);
+		menuItemSmallTouch = menu.add(0, MENU_QUICK_TOUCH, 0, R.string.s49);
 		MenuItemCompat.setShowAsAction(menuItemSmallTouch, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
 
-		menuItemDeconnection = menu.add(0, MENU_DECONNECT, 0, R.string.s41).setVisible(mGoogleApiClient != null && mGoogleApiClient.isConnected());
+		menuItemDeconnection = menu.add(0, MENU_DECONNECT, 0, R.string.s41);
 		menuItemDeconnection.setVisible((mDrawerLayout == null || mDrawerLayout.isDrawerOpen(leftDrawer)) && mGoogleApiClient != null && mGoogleApiClient.isConnected());
 
 		openRightDrawer = menu.add(0, MENU_RIGHT_DRAWER, 1, R.string.s70).setIcon(R.drawable.ic_action_communication_clear_all);
@@ -593,6 +593,11 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		menu.findItem(MENU_QUICK_TOUCH).setVisible(showMenu);
 		menu.findItem(MENU_RIGHT_DRAWER).setVisible(showMenu && isSlideLock);
 		menu.findItem(MENU_DECONNECT).setVisible((mDrawerLayout == null || mDrawerLayout.isDrawerOpen(leftDrawer)) && mGoogleApiClient != null && mGoogleApiClient.isConnected());
+
+		nextIconForSmallTouchMenu = nextIconForSmallTouchMenu == R.drawable.ic_action_smalltouch_disactivate ? R.drawable.ic_action_smalltouch : R.drawable.ic_action_smalltouch_disactivate;
+		menu.findItem(MENU_QUICK_TOUCH).setIcon(nextIconForSmallTouchMenu);
+		menu.findItem(MENU_QUICK_TOUCH).setTitle(nextIconForSmallTouchMenu == R.drawable.ic_action_smalltouch_disactivate ? R.string.s50 : R.string.s49);
+		
 		return super.onPrepareOptionsMenu(menu);
 	}
 
