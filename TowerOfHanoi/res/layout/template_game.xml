@@ -3,17 +3,38 @@
     android:layout_height="fill_parent"
     android:orientation="vertical" >
 
-    <TextView
-        android:id="@+id/tv_sectionTitle"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="fill_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:fontFamily="sans-serif-condansed"
         android:gravity="center_vertical"
+        android:orientation="horizontal"
         android:paddingLeft="8dp"
-        android:textAllCaps="true"
-        android:textSize="14sp"
-        android:textStyle="bold" />
+        android:paddingRight="8dp" >
+
+        <TextView
+            android:id="@+id/tv_sectionTitle"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:fontFamily="sans-serif-condansed"
+            android:gravity="center_vertical"
+            android:singleLine="true"
+            android:textAllCaps="true"
+            android:textSize="14sp"
+            android:textStyle="bold" />
+
+        <CheckBox
+            android:id="@+id/cb_seeAll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:button="@null"
+            android:drawableRight="?android:attr/listChoiceIndicatorMultiple"
+            android:text="@string/s88"
+            android:textAllCaps="true"
+            android:textSize="14sp" />
+    </LinearLayout>
 
     <RelativeLayout
         android:layout_width="fill_parent"
@@ -58,9 +79,9 @@
             android:id="@+id/t_game"
             android:layout_width="40dp"
             android:layout_height="40dp"
+            android:layout_alignParentRight="true"
             android:background="@android:color/transparent"
-            android:minHeight="40dp"
-            android:layout_alignParentRight="true" />
+            android:minHeight="40dp" />
     </RelativeLayout>
 
 </LinearLayout>

@@ -32,6 +32,9 @@ import android.view.View.OnLongClickListener;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.CheckBox;
+import android.widget.CompoundButton;
+import android.widget.CompoundButton.OnCheckedChangeListener;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
@@ -53,7 +56,6 @@ import fr.mathis.tourhanoipro.adapter.DisksSpinnerAdapter;
 import fr.mathis.tourhanoipro.interfaces.HelpListener;
 import fr.mathis.tourhanoipro.interfaces.TurnListener;
 import fr.mathis.tourhanoipro.listener.SwipeToDismissTouchListener;
-import fr.mathis.tourhanoipro.model.QuickTouch;
 import fr.mathis.tourhanoipro.tools.DataManager;
 import fr.mathis.tourhanoipro.tools.Tools;
 import fr.mathis.tourhanoipro.views.GameView;
@@ -156,7 +158,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		SwipeToDismissTouchListener swipeToDismissTouchListener = new SwipeToDismissTouchListener(rvSavedGames, new SwipeToDismissTouchListener.DismissCallbacks() {
 			@Override
 			public SwipeToDismissTouchListener.SwipeDirection canDismiss(int position) {
-				if (position == 0)
+				if (position == 0 || !adapter.showAllSavedGames)
 					return SwipeToDismissTouchListener.SwipeDirection.NONE;
 				return SwipeToDismissTouchListener.SwipeDirection.LEFT;
 			}
@@ -164,12 +166,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			@Override
 			public void onDismiss(RecyclerView view, List<SwipeToDismissTouchListener.PendingDismissData> dismissData) {
 				for (SwipeToDismissTouchListener.PendingDismissData data : dismissData) {
-					allGames.remove(data.position);
-					adapter.notifyItemRemoved(data.position);
-					if (data.position < 2) {
-						adapter.notifyItemChanged(0);
-						adapter.notifyItemChanged(1);
-					}
+					deleteGameBySwypeOrMenu(data.position);
 				}
 			}
 		});
@@ -842,7 +839,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	}
 
 	@SuppressLint("NewApi")
-	public void restartGame() {		
+	public void restartGame() {
 		boolean oldGameIsContinuable = !(currentGame.isJustStarted() || currentGame.isFinished());
 		String sOldGame = currentGame.saveGameAsString();
 		allGames.set(currentGameIndex, sOldGame);
@@ -979,6 +976,18 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			mGoogleApiClient.disconnect();
 	}
 
+	private void deleteGameBySwypeOrMenu(int position) {
+		allGames.remove(position);
+
+		if (allGames.size() <= GameAdapter.NB_CLOSE_GAME_COUNT + 1) {
+			adapter.showAllSavedGames = false;
+		}
+
+		adapter.notifyItemRemoved(position);
+		adapter.notifyItemChanged(0);
+		adapter.notifyItemChanged(1);
+	}
+
 	class GameVH extends RecyclerView.ViewHolder {
 		View v;
 
@@ -989,15 +998,22 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	}
 
 	class GameAdapter extends RecyclerView.Adapter<GameVH> {
+		static final int NB_CLOSE_GAME_COUNT = 2;
+
 		LayoutInflater inflater;
+		boolean showAllSavedGames;
 
 		public GameAdapter(LayoutInflater inflater) {
 			this.inflater = inflater;
+			this.showAllSavedGames = false;
 		}
 
 		@Override
 		public int getItemCount() {
-			return allGames.size();
+			if (showAllSavedGames)
+				return allGames.size();
+			else
+				return Math.min(allGames.size(), NB_CLOSE_GAME_COUNT + 1);
 		}
 
 		@SuppressWarnings("deprecation")
@@ -1006,15 +1022,18 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			View v = holder.v;
 
 			GameView gv = (GameView) v.findViewById(R.id.gv);
+			View vClickableArea = v.findViewById(R.id.clickableArea);
+			CheckBox cbSeeAll = (CheckBox) v.findViewById(R.id.cb_seeAll);
+
 			gv.launchGame(allGames.get(pos));
 			gv.setDisabled(true);
 
 			v.findViewById(R.id.iv_playing).setVisibility(pos == currentGameIndex ? View.VISIBLE : View.INVISIBLE);
 
 			if (pos == currentGameIndex) {
-				v.findViewById(R.id.clickableArea).setBackgroundDrawable(null);
+				vClickableArea.setBackgroundDrawable(null);
 			} else {
-				v.findViewById(R.id.clickableArea).setBackgroundResource(R.drawable.selectable_background_hanoi);
+				vClickableArea.setBackgroundResource(R.drawable.selectable_background_hanoi);
 			}
 
 			TextView tvSectionTitle = (TextView) v.findViewById(R.id.tv_sectionTitle);
@@ -1022,18 +1041,25 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 				tvSectionTitle.setText(R.string.s72);
 				tvSectionTitle.setVisibility(View.VISIBLE);
 				gv.setBackgroundColor(Color.LTGRAY);
+				cbSeeAll.setVisibility(View.GONE);
 			} else if (pos == 1) {
 				tvSectionTitle.setText(R.string.s73);
 				tvSectionTitle.setVisibility(View.VISIBLE);
 				gv.setBackgroundColor(Color.WHITE);
+
+				if (allGames.size() > NB_CLOSE_GAME_COUNT + 1)
+					cbSeeAll.setVisibility(View.VISIBLE);
+				else
+					cbSeeAll.setVisibility(View.GONE);
 			} else {
 				tvSectionTitle.setVisibility(View.GONE);
 				gv.setBackgroundColor(Color.WHITE);
+				cbSeeAll.setVisibility(View.GONE);
 			}
 
 			final String gameAtCurrentPosition = allGames.get(pos);
 
-			v.findViewById(R.id.clickableArea).setOnClickListener(new OnClickListener() {
+			vClickableArea.setOnClickListener(new OnClickListener() {
 
 				@Override
 				public void onClick(View v) {
@@ -1044,6 +1070,24 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 						pendingDrawerActionData = Integer.valueOf(index);
 						pendingDrawerAction = DRAWER_RESTORE_GAME;
 						closeDrawer();
+					}
+				}
+			});
+
+			cbSeeAll.setOnCheckedChangeListener(null);
+
+			cbSeeAll.setChecked(showAllSavedGames);
+
+			cbSeeAll.setOnCheckedChangeListener(new OnCheckedChangeListener() {
+
+				@Override
+				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+					showAllSavedGames = !showAllSavedGames;
+
+					if (showAllSavedGames) {
+						notifyItemRangeInserted(NB_CLOSE_GAME_COUNT + 1, allGames.size() - (NB_CLOSE_GAME_COUNT + 1) - 1);
+					} else {
+						notifyItemRangeRemoved(NB_CLOSE_GAME_COUNT + 1, allGames.size() - (NB_CLOSE_GAME_COUNT + 1));
 					}
 				}
 			});
@@ -1061,12 +1105,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 
 					if (item.getItemId() == R.id.menu_delete) {
 						int index = allGames.indexOf(gameAtCurrentPosition);
-						allGames.remove(index);
-						notifyItemRemoved(index);
-						if (index < 2) {
-							notifyItemChanged(0);
-							notifyItemChanged(1);
-						}
+						deleteGameBySwypeOrMenu(index);
 					}
 					return true;
 				}

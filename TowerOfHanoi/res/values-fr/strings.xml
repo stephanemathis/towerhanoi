@@ -26,7 +26,7 @@
     <string name="s70">Sauvegardes</string>
     <string name="s71">Bloque l\'accès aux menus en glissant votre doigt d\'un bord de l\'écran</string>
     <string name="s72">En cours</string>
-    <string name="s73">Parties sauvegardées</string>
+    <string name="s73">Récents</string>
     <string name="s75">Supprimer</string>
     <string name="s76"><b>Tours</b> de <b>Hanoi</b></string>
 	<string name="s82">Besoin d\'aide ?</string>
@@ -35,4 +35,5 @@
 	<string name="s85">Sauvegardes</string>
 	<string name="s86">Vous allez recommencer une nouvelle partie.\nLa partie en cours peut être reprise à tout moment depuis le menu latéral de droite.</string>
 	<string name="s87">OK</string>
+	<string name="s88">VOIR TOUT</string>
 </resources>
