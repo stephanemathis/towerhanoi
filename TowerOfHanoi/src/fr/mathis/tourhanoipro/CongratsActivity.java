@@ -46,13 +46,13 @@ public class CongratsActivity extends Activity {
 
 		try {
 			Integer.parseInt(secondsText.charAt(0) + "");
-		} catch (NumberFormatException nfe) {
+		} catch (Exception nfe) {
 			secondsText = "0" + secondsText;
 		}
 
 		try {
 			Integer.parseInt(secondsText.charAt(secondsText.length() - 2) + "");
-		} catch (NumberFormatException nfe) {
+		} catch (Exception nfe) {
 			if (secondsText.endsWith("0"))
 				secondsText = secondsText.substring(0, secondsText.length() - 2);
 		}

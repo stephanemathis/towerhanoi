@@ -53,6 +53,7 @@ import fr.mathis.tourhanoipro.adapter.DisksSpinnerAdapter;
 import fr.mathis.tourhanoipro.interfaces.HelpListener;
 import fr.mathis.tourhanoipro.interfaces.TurnListener;
 import fr.mathis.tourhanoipro.listener.SwipeToDismissTouchListener;
+import fr.mathis.tourhanoipro.model.QuickTouch;
 import fr.mathis.tourhanoipro.tools.DataManager;
 import fr.mathis.tourhanoipro.tools.Tools;
 import fr.mathis.tourhanoipro.views.GameView;
@@ -657,13 +658,6 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		super.onConfigurationChanged(newConfig);
 		if (mDrawerToggle != null)
 			mDrawerToggle.onConfigurationChanged(newConfig);
-		nextIconForSmallTouchMenu = R.drawable.ic_action_smalltouch;
-		if (menuItemSmallTouch != null) {
-			menuItemSmallTouch.setIcon(nextIconForSmallTouchMenu);
-			menuItemSmallTouch.setTitle(R.string.s49);
-		}
-		currentGame.resetQuickTouchZone();
-		getSupportActionBar().setTitle("");
 
 		float dpWidth = getResources().getDisplayMetrics().widthPixels / getResources().getDisplayMetrics().density;
 		if (dpWidth > 400)
@@ -848,8 +842,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	}
 
 	@SuppressLint("NewApi")
-	public void restartGame() {
-
+	public void restartGame() {		
 		boolean oldGameIsContinuable = !(currentGame.isJustStarted() || currentGame.isFinished());
 		String sOldGame = currentGame.saveGameAsString();
 		allGames.set(currentGameIndex, sOldGame);
@@ -859,9 +852,6 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		DataManager.SaveAllGames(allGames, getApplicationContext());
 		allGames = DataManager.GetAllSavedGames(getApplicationContext());
 
-		nextIconForSmallTouchMenu = R.drawable.ic_action_smalltouch;
-		menuItemSmallTouch.setIcon(nextIconForSmallTouchMenu);
-		menuItemSmallTouch.setTitle(R.string.s49);
 		adapter.notifyDataSetChanged();
 
 		if (oldGameIsContinuable && !DataManager.GetMemorizedValueBoolean("shownRightDrawerAfterFirstNewGame", getApplicationContext())) {

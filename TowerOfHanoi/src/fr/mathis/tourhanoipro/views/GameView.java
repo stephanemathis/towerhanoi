@@ -14,6 +14,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import fr.mathis.tourhanoipro.R;
@@ -120,8 +121,8 @@ public class GameView extends View {
 
 		QuickTouch q = null;
 
-		if (_currentGameField != null && _currentGameField.getQt() != null)
-			q = _currentGameField.getQt();
+		if (_currentGameField != null && _currentGameField.getQtCopy() != null)
+			q = _currentGameField.getQtCopy();
 
 		_currentGameField = new ClassField();
 		_currentGameField.setQt(q);
@@ -153,11 +154,8 @@ public class GameView extends View {
 		}
 
 		_currentGameField.setTowers(towers);
-		this.invalidate();
-	}
 
-	public void resetQuickTouchZone() {
-		_currentGameField.setQt(null);
+		this.invalidate();
 	}
 
 	public void cleanTouch() {
@@ -181,8 +179,8 @@ public class GameView extends View {
 		String v1 = values[0];
 		String[] towers = v1.split(":");
 		QuickTouch q = null;
-		if (_currentGameField != null && _currentGameField.getQt() != null)
-			q = _currentGameField.getQt();
+		if (_currentGameField != null && _currentGameField.getQtCopy() != null)
+			q = _currentGameField.getQtCopy();
 		_currentGameField = new ClassField();
 		_currentGameField.setQt(q);
 		_currentGameField.setTowers(new ArrayList<ClassTower>());
@@ -310,13 +308,13 @@ public class GameView extends View {
 					_fingerLinePath.moveTo(event.getX(), event.getY());
 					latestTouchPositionX = event.getX();
 					latestTouchPositionY = event.getY();
-					if (_currentGameField.getQt() != null) {
+					if (_currentGameField.getQtCopy() != null) {
 						int t, w, h, l;
 						Point p = new Point((int) event.getX(), (int) event.getY());
-						t = _currentGameField.getQt().getTop();
-						w = _currentGameField.getQt().getWidth();
-						h = _currentGameField.getQt().getHeight();
-						l = _currentGameField.getQt().getLeft();
+						t = _currentGameField.getQtCopy().getTop();
+						w = _currentGameField.getQtCopy().getWidth();
+						h = _currentGameField.getQtCopy().getHeight();
+						l = _currentGameField.getQtCopy().getLeft();
 
 						if (p.x < l + w && p.x > l && p.y > t && p.y < t + h) {
 							_currentTouchIsInquickTouchZone = true;
@@ -336,10 +334,10 @@ public class GameView extends View {
 
 					if (_currentTouchIsInquickTouchZone) {
 						int t, w, h, l;
-						t = _currentGameField.getQt().getTop();
-						w = _currentGameField.getQt().getWidth();
-						h = _currentGameField.getQt().getHeight();
-						l = _currentGameField.getQt().getLeft();
+						t = _currentGameField.getQtCopy().getTop();
+						w = _currentGameField.getQtCopy().getWidth();
+						h = _currentGameField.getQtCopy().getHeight();
+						l = _currentGameField.getQtCopy().getLeft();
 
 						if (p.x < l)
 							p.x = l;
@@ -686,13 +684,14 @@ public class GameView extends View {
 				canvas.drawCircle(_viewWidth - Tools.convertDpToPixel(16.0f), _viewHeight / 2 + Tools.convertDpToPixel(40.0f), Tools.convertDpToPixel(8), mPaint);
 			}
 
-			if (_currentGameField != null && _currentGameField.getQt() != null) {
+			if (_currentGameField != null && _currentGameField.getQtCopy() != null) {
 				int t, w, h, l;
-				t = _currentGameField.getQt().getTop();
-				w = _currentGameField.getQt().getWidth();
-				h = _currentGameField.getQt().getHeight();
-				l = _currentGameField.getQt().getLeft();
 
+				t = _currentGameField.getQtCopy().getTop();
+				w = _currentGameField.getQtCopy().getWidth();
+				h = _currentGameField.getQtCopy().getHeight();
+				l = _currentGameField.getQtCopy().getLeft();
+				Log.d("TOUCH", "t:" + t + "w" + w + "h" + h + "l" + l);
 				_elementsPaint.setColor(Color.WHITE);
 
 				canvas.drawRect(l, t, l + w, t + h, _elementsPaint);
@@ -767,6 +766,51 @@ public class GameView extends View {
 			height = desiredHeight;
 		}
 
+		if (_currentGameField != null && _currentGameField.getQtCopy() != null) {
+			QuickTouch resizedQt = _currentGameField.getQtCopy();
+
+			float heightRatio = (float) height / (float) _viewHeight;
+			float widthRatio = (float) width / (float) _viewWidth;
+
+			if (heightRatio != 1.0f) {
+				if (resizedQt.getWidth() > width) {
+					resizedQt.setWidth((int) (width * widthRatio));
+				}
+
+				if (resizedQt.getHeight() > height) {
+					resizedQt.setHeight((int) (height * heightRatio));
+				}
+
+				float percentLeft = (float) resizedQt.getLeft() / _viewWidth;
+				float percentRight = (float) (_viewWidth - (resizedQt.getLeft() + resizedQt.getWidth())) / _viewWidth;
+
+				if (percentLeft < percentRight) {
+					resizedQt.setLeft((int) (width * percentLeft));
+				} else {
+					resizedQt.setLeft((int) (width - resizedQt.getWidth() - width * percentRight));
+				}
+
+				float percentTop = (float) resizedQt.getTop() / _viewHeight;
+				float percentBottom = (float) (_viewHeight - (resizedQt.getTop() + resizedQt.getHeight())) / _viewHeight;
+
+				if (percentTop < percentBottom) {
+					resizedQt.setTop((int) (height * percentTop));
+				} else {
+					resizedQt.setTop((int) (height - resizedQt.getHeight() - height * percentBottom));
+				}
+
+				if (resizedQt.getLeft() + resizedQt.getWidth() > width) {
+					resizedQt.setLeft(width - resizedQt.getWidth() - Tools.convertDpToPixel(8));
+				}
+
+				if (resizedQt.getTop() + resizedQt.getHeight() > height) {
+					resizedQt.setTop(height - resizedQt.getHeight() - Tools.convertDpToPixel(8));
+				}
+
+				this.setQt(resizedQt);
+			}
+		}
+
 		_viewHeight = height;
 		_viewWidth = width;
 
@@ -804,8 +848,7 @@ public class GameView extends View {
 	}
 
 	public void activateQuickTouchMode() {
-
-		if (_isBuildingQuickZone || _currentGameField.getQt() != null) {
+		if (_isBuildingQuickZone || _currentGameField.getQtCopy() != null) {
 			_currentGameField.setQt(null);
 			_isBuildingQuickZone = false;
 		} else {
@@ -845,7 +888,7 @@ public class GameView extends View {
 
 	public QuickTouch getQt() {
 		if (_currentGameField != null)
-			return _currentGameField.getQt();
+			return _currentGameField.getQtCopy();
 		else
 			return null;
 	}
