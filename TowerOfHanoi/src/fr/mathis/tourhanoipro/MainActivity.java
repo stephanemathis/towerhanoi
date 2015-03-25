@@ -152,6 +152,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		rvSavedGames = (RecyclerView) findViewById(R.id.rvSavedGames);
 		rvSavedGames.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
 		rvSavedGames.setHasFixedSize(true);
+		rvSavedGames.setVerticalScrollBarEnabled(false);
 		adapter = new GameAdapter(LayoutInflater.from(this));
 		rvSavedGames.setAdapter(adapter);
 
@@ -1083,6 +1084,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 				@Override
 				public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
 					showAllSavedGames = !showAllSavedGames;
+					rvSavedGames.setVerticalScrollBarEnabled(showAllSavedGames);
 
 					if (showAllSavedGames) {
 						notifyItemRangeInserted(NB_CLOSE_GAME_COUNT + 1, allGames.size() - (NB_CLOSE_GAME_COUNT + 1) - 1);

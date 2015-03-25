@@ -325,15 +325,10 @@
         android:background="#F7F7F7"
         android:clickable="true" >
 
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/rvSavedGames"
+        <fr.mathis.tourhanoipro.views.FixRecyclerViewScrollbarFrameLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingBottom="8dp"
-            android:paddingTop="8dp"
-            android:scrollbars="none" >
-        </android.support.v7.widget.RecyclerView>
+            android:layout_height="match_parent" >
+        </fr.mathis.tourhanoipro.views.FixRecyclerViewScrollbarFrameLayout>
     </RelativeLayout>
 
 </android.support.v4.widget.DrawerLayout>
