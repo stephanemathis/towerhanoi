@@ -54,13 +54,14 @@ import com.nineoldandroids.animation.ObjectAnimator;
 
 import fr.mathis.tourhanoipro.adapter.DisksSpinnerAdapter;
 import fr.mathis.tourhanoipro.interfaces.HelpListener;
+import fr.mathis.tourhanoipro.interfaces.QuickTouchListener;
 import fr.mathis.tourhanoipro.interfaces.TurnListener;
 import fr.mathis.tourhanoipro.listener.SwipeToDismissTouchListener;
 import fr.mathis.tourhanoipro.tools.DataManager;
 import fr.mathis.tourhanoipro.tools.Tools;
 import fr.mathis.tourhanoipro.views.GameView;
 
-public class MainActivity extends ActionBarActivity implements TurnListener, ConnectionCallbacks, OnConnectionFailedListener {
+public class MainActivity extends ActionBarActivity implements TurnListener, ConnectionCallbacks, OnConnectionFailedListener, QuickTouchListener {
 
 	static final int DRAWER_NEW_GAME = 1;
 	static final int DRAWER_ACHIEVEMENTS = 2;
@@ -68,9 +69,11 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	static final int DRAWER_TUTO = 4;
 	static final int DRAWER_RESTORE_GAME = 5;
 
-	static final int MENU_QUICK_TOUCH = 1;
+	static final int MENU_QUICK_TOUCH_ENABLE = 1;
 	static final int MENU_DECONNECT = 2;
 	static final int MENU_RIGHT_DRAWER = 3;
+	static final int MENU_QUICK_TOUCH_MODIFY = 4;
+	static final int MENU_QUICK_TOUCH_REMOVE = 5;
 
 	static final int POPUP_MENU_PLAY = 0;
 	static final int POPUP_MENU_DELETE = 1;
@@ -96,9 +99,10 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 	GameView animateGame;
 
 	MenuItem menuItemDeconnection;
-	MenuItem menuItemSmallTouch;
+	MenuItem menuItemSmallTouchEnable;
+	MenuItem menuItemSmallTouchModify;
+	MenuItem menuItemSmallTouchRemove;
 	MenuItem openRightDrawer;
-	int nextIconForSmallTouchMenu = -1;
 	boolean showMenu = true;
 	String actionBarSubtitle = null;
 	int currentGameIndex = 0;
@@ -352,6 +356,7 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		}
 
 		currentGame.setTurnListener(this);
+		currentGame.setQuickTouchListener(this);
 	}
 
 	private void initSpinner() {
@@ -576,8 +581,17 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		menuItemSmallTouch = menu.add(0, MENU_QUICK_TOUCH, 0, R.string.s49);
-		MenuItemCompat.setShowAsAction(menuItemSmallTouch, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+
+		menu.clear();
+
+		menuItemSmallTouchEnable = menu.add(0, MENU_QUICK_TOUCH_ENABLE, 0, R.string.s49);
+		menuItemSmallTouchEnable.setIcon(R.drawable.ic_action_smalltouch);
+		MenuItemCompat.setShowAsAction(menuItemSmallTouchEnable, MenuItemCompat.SHOW_AS_ACTION_IF_ROOM);
+
+		menuItemSmallTouchModify = menu.add(0, MENU_QUICK_TOUCH_MODIFY, 0, R.string.s89);
+		menuItemSmallTouchRemove = menu.add(0, MENU_QUICK_TOUCH_REMOVE, 0, R.string.s50);
+		MenuItemCompat.setShowAsAction(menuItemSmallTouchModify, MenuItemCompat.SHOW_AS_ACTION_NEVER);
+		MenuItemCompat.setShowAsAction(menuItemSmallTouchRemove, MenuItemCompat.SHOW_AS_ACTION_NEVER);
 
 		menuItemDeconnection = menu.add(0, MENU_DECONNECT, 0, R.string.s41);
 		menuItemDeconnection.setVisible((mDrawerLayout == null || mDrawerLayout.isDrawerOpen(leftDrawer)) && mGoogleApiClient != null && mGoogleApiClient.isConnected());
@@ -591,13 +605,12 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) {
-		menu.findItem(MENU_QUICK_TOUCH).setVisible(showMenu);
+		menu.findItem(MENU_QUICK_TOUCH_MODIFY).setVisible(showMenu && (currentGame != null && currentGame.getQt() != null));
+		menu.findItem(MENU_QUICK_TOUCH_REMOVE).setVisible(showMenu && (currentGame != null && currentGame.getQt() != null));
+		menu.findItem(MENU_QUICK_TOUCH_ENABLE).setVisible(showMenu && (currentGame == null || currentGame.getQt() == null));
+
 		menu.findItem(MENU_RIGHT_DRAWER).setVisible(showMenu && isSlideLock);
 		menu.findItem(MENU_DECONNECT).setVisible((mDrawerLayout == null || mDrawerLayout.isDrawerOpen(leftDrawer)) && mGoogleApiClient != null && mGoogleApiClient.isConnected());
-
-		nextIconForSmallTouchMenu = nextIconForSmallTouchMenu == R.drawable.ic_action_smalltouch_disactivate ? R.drawable.ic_action_smalltouch : R.drawable.ic_action_smalltouch_disactivate;
-		menu.findItem(MENU_QUICK_TOUCH).setIcon(nextIconForSmallTouchMenu);
-		menu.findItem(MENU_QUICK_TOUCH).setTitle(nextIconForSmallTouchMenu == R.drawable.ic_action_smalltouch_disactivate ? R.string.s50 : R.string.s49);
 
 		return super.onPrepareOptionsMenu(menu);
 	}
@@ -618,19 +631,24 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 				mDrawerLayout.openDrawer(rightDrawer);
 			}
 			break;
-		case MENU_QUICK_TOUCH:
+		case MENU_QUICK_TOUCH_ENABLE:
 			currentGame.activateQuickTouchMode();
 
-			nextIconForSmallTouchMenu = nextIconForSmallTouchMenu == R.drawable.ic_action_smalltouch_disactivate ? R.drawable.ic_action_smalltouch : R.drawable.ic_action_smalltouch_disactivate;
-			menuItemSmallTouch.setIcon(nextIconForSmallTouchMenu);
-			menuItemSmallTouch.setTitle(nextIconForSmallTouchMenu == R.drawable.ic_action_smalltouch_disactivate ? R.string.s50 : R.string.s49);
+			menuItemSmallTouchEnable.setVisible(false);
 
-			if (nextIconForSmallTouchMenu == R.drawable.ic_action_smalltouch_disactivate)
-				initHelpPopup(true);
-			else
-				initHelpPopup(false);
+			initHelpPopup(true);
 
 			return true;
+		case MENU_QUICK_TOUCH_MODIFY:
+			currentGame.enterEditMode();
+			break;
+		case MENU_QUICK_TOUCH_REMOVE:
+			currentGame.activateQuickTouchMode();
+
+			menuItemSmallTouchRemove.setVisible(false);
+			menuItemSmallTouchModify.setVisible(false);
+			menuItemSmallTouchEnable.setVisible(true);
+			break;
 		case MENU_DECONNECT:
 			if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 				Games.signOut(mGoogleApiClient);
@@ -989,6 +1007,12 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 		adapter.notifyItemChanged(1);
 	}
 
+	@Override
+	public void quickTouchConstructed() {
+		menuItemSmallTouchRemove.setVisible(true);
+		menuItemSmallTouchModify.setVisible(true);
+	}
+
 	class GameVH extends RecyclerView.ViewHolder {
 		View v;
 
@@ -1125,4 +1149,5 @@ public class MainActivity extends ActionBarActivity implements TurnListener, Con
 			return new GameVH(inflater.inflate(R.layout.template_game, parent, false));
 		}
 	}
+
 }

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.DashPathEffect;
@@ -14,11 +16,11 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.preference.PreferenceManager;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import fr.mathis.tourhanoipro.R;
 import fr.mathis.tourhanoipro.interfaces.HelpListener;
+import fr.mathis.tourhanoipro.interfaces.QuickTouchListener;
 import fr.mathis.tourhanoipro.interfaces.TurnListener;
 import fr.mathis.tourhanoipro.model.ClassCircle;
 import fr.mathis.tourhanoipro.model.ClassField;
@@ -45,16 +47,20 @@ public class GameView extends View {
 	long _currentGameSavedDurationlastGame = -1;
 	Point[] _startAndEndTouchPoint;
 	boolean _shouldDrawHelpLine;
+	boolean _isQtEditMode;
 	int _currentGameMode;
 	boolean _isTouchDisabled;
 	int _backgroundColor;
+	boolean _isMovingQuickTouch;
 
 	// draw variables
+	Bitmap _moveBitmap;
 	int _viewHeight;
 	int _viewWidth;
 	Rect _reusableRect;
 	Paint _elementsPaint;
 	Paint _fingerLinePaint;
+	Paint _bitmapPaint;
 	Path _fingerLinePath;
 
 	// touch variables
@@ -66,6 +72,7 @@ public class GameView extends View {
 	// listeners
 	TurnListener _turnListener;
 	HelpListener _helpListener;
+	QuickTouchListener _quickTouchListener;
 
 	public GameView(Context context) {
 		super(context);
@@ -86,6 +93,8 @@ public class GameView extends View {
 		_shouldDrawHelpLine = false;
 		_isBuildingQuickZone = false;
 		_currentTouchIsInquickTouchZone = false;
+		_isMovingQuickTouch = false;
+		_isQtEditMode = false;
 		_reusableRect = new Rect(0, 0, 0, 0);
 		_backgroundColor = Color.WHITE;
 
@@ -97,6 +106,9 @@ public class GameView extends View {
 		_elementsPaint.setStrokeCap(Paint.Cap.ROUND);
 		_elementsPaint.setAntiAlias(true);
 		_elementsPaint.setTextSize(Tools.convertDpToPixel(32));
+
+		_bitmapPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
+		_bitmapPaint.setDither(true);
 
 		_fingerLinePaint = new Paint();
 		_fingerLinePaint.setAntiAlias(true);
@@ -255,7 +267,6 @@ public class GameView extends View {
 		if (_isTouchDisabled)
 			return false;
 		else {
-
 			if (_isBuildingQuickZone) {
 				if (event.getAction() == MotionEvent.ACTION_DOWN) {
 					_qtStartEdgeBuilding = new Point((int) event.getX(), (int) event.getY());
@@ -291,6 +302,8 @@ public class GameView extends View {
 						_shouldDrawHelpLine = false;
 						if (_helpListener != null)
 							_helpListener.stepPassed(0);
+						if (_quickTouchListener != null)
+							_quickTouchListener.quickTouchConstructed();
 					} else {
 						_currentGameField.setQt(null);
 						_qtEndEdgeBuilding = null;
@@ -300,8 +313,47 @@ public class GameView extends View {
 					}
 				}
 				this.invalidate();
-			} else {
+			} /*
+			 * else if (_isQtEditMode) { if (event.getAction() == MotionEvent.ACTION_DOWN) { latestTouchPositionX = event.getX(); latestTouchPositionY = event.getY(); } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+			 * 
+			 * QuickTouch movedQt = _currentGameField.getQtCopy();
+			 * 
+			 * int newLeft = (int) (movedQt.getLeft() + (event.getX() - latestTouchPositionX)); if (newLeft < 0) newLeft = 0;
+			 * 
+			 * if (newLeft + movedQt.getWidth() > _viewWidth) newLeft = _viewWidth - movedQt.getWidth();
+			 * 
+			 * int newTop = (int) (movedQt.getTop() + (event.getY() - latestTouchPositionY)); if (newTop < 0) newTop = 0;
+			 * 
+			 * if (newTop + movedQt.getHeight() > _viewHeight) newTop = _viewHeight - movedQt.getHeight();
+			 * 
+			 * movedQt.setLeft(newLeft); movedQt.setTop(newTop);
+			 * 
+			 * setQt(movedQt);
+			 * 
+			 * latestTouchPositionX = event.getX(); latestTouchPositionY = event.getY(); } else if (event.getAction() == MotionEvent.ACTION_UP) { _isQtEditMode = false; _bitmapPaint = null; } this.invalidate(); }
+			 */else {
 				if (event.getAction() == MotionEvent.ACTION_DOWN) {
+
+					if (_isQtEditMode) {
+						if (_currentGameField.getQtCopy() != null) {
+							int t, w, h, l;
+							Point p = new Point((int) event.getX(), (int) event.getY());
+							t = _currentGameField.getQtCopy().getTop();
+							w = _currentGameField.getQtCopy().getWidth();
+							h = _currentGameField.getQtCopy().getHeight();
+							l = _currentGameField.getQtCopy().getLeft();
+
+							if (p.x < l + w && p.x > l && p.y > t && p.y < t + h) {
+
+								_isMovingQuickTouch = true;
+								latestTouchPositionX = event.getX();
+								latestTouchPositionY = event.getY();
+								invalidate();
+								return true;
+							}
+						}
+					}
+
 					_startAndEndTouchPoint = new Point[2];
 					_fingerLinePath = new Path();
 					_startAndEndTouchPoint[0] = new Point((int) event.getX(), (int) event.getY());
@@ -317,7 +369,9 @@ public class GameView extends View {
 						l = _currentGameField.getQtCopy().getLeft();
 
 						if (p.x < l + w && p.x > l && p.y > t && p.y < t + h) {
+
 							_currentTouchIsInquickTouchZone = true;
+
 							p.x = p.x - l;
 
 							if (p.x < w / 3)
@@ -327,12 +381,37 @@ public class GameView extends View {
 							else
 								_startAndEndTouchPoint[0] = new Point(_viewWidth / 2 + _viewWidth / 6 + _viewWidth / 6, _viewHeight * 2 / 5);
 						}
+
 					}
 
 				} else if (event.getAction() == MotionEvent.ACTION_MOVE) {
 					Point p = new Point((int) event.getX(), (int) event.getY());
 
-					if (_currentTouchIsInquickTouchZone) {
+					if (_isMovingQuickTouch) {
+						QuickTouch movedQt = _currentGameField.getQtCopy();
+
+						int newLeft = (int) (movedQt.getLeft() + (event.getX() - latestTouchPositionX));
+						if (newLeft < 0)
+							newLeft = 0;
+
+						if (newLeft + movedQt.getWidth() > _viewWidth)
+							newLeft = _viewWidth - movedQt.getWidth();
+
+						int newTop = (int) (movedQt.getTop() + (event.getY() - latestTouchPositionY));
+						if (newTop < 0)
+							newTop = 0;
+
+						if (newTop + movedQt.getHeight() > _viewHeight)
+							newTop = _viewHeight - movedQt.getHeight();
+
+						movedQt.setLeft(newLeft);
+						movedQt.setTop(newTop);
+
+						setQt(movedQt);
+
+						latestTouchPositionX = event.getX();
+						latestTouchPositionY = event.getY();
+					} else if (_currentTouchIsInquickTouchZone) {
 						int t, w, h, l;
 						t = _currentGameField.getQtCopy().getTop();
 						w = _currentGameField.getQtCopy().getWidth();
@@ -383,14 +462,21 @@ public class GameView extends View {
 					}
 				} else if (event.getAction() == MotionEvent.ACTION_UP) {
 
-					if (_currentTouchIsInquickTouchZone)
-						if (_helpListener != null)
-							_helpListener.stepPassed(1);
+					if (_isMovingQuickTouch) {
+						_isQtEditMode = false;
+						_isMovingQuickTouch = false;
+						_bitmapPaint = null;
+					} else {
 
-					moveOneCircle(_startAndEndTouchPoint);
-					_startAndEndTouchPoint = new Point[2];
-					_currentTouchIsInquickTouchZone = false;
-					_fingerLinePath = new Path();
+						if (_currentTouchIsInquickTouchZone)
+							if (_helpListener != null)
+								_helpListener.stepPassed(1);
+
+						moveOneCircle(_startAndEndTouchPoint);
+						_startAndEndTouchPoint = new Point[2];
+						_currentTouchIsInquickTouchZone = false;
+						_fingerLinePath = new Path();
+					}
 				}
 
 				this.invalidate();
@@ -691,47 +777,59 @@ public class GameView extends View {
 				w = _currentGameField.getQtCopy().getWidth();
 				h = _currentGameField.getQtCopy().getHeight();
 				l = _currentGameField.getQtCopy().getLeft();
-				Log.d("TOUCH", "t:" + t + "w" + w + "h" + h + "l" + l);
+
 				_elementsPaint.setColor(Color.WHITE);
 
 				canvas.drawRect(l, t, l + w, t + h, _elementsPaint);
 
-				if (_currentTouchIsInquickTouchZone && _startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null) {
-					if (_startAndEndTouchPoint[1] != null) {
-						x = _startAndEndTouchPoint[1].x;
-						y = _startAndEndTouchPoint[1].y;
-					} else {
-						x = _startAndEndTouchPoint[0].x;
-						y = _startAndEndTouchPoint[0].y;
-					}
+				if (_isQtEditMode) {
+					_elementsPaint.setColor(getResources().getColor(R.color.primary_color));
+					_elementsPaint.setAlpha(80);
+					canvas.drawRect(l, t, l + w, t + h, _elementsPaint);
+					_elementsPaint.setAlpha(255);
 
-					if (x < _viewWidth / 3) {
-						_reusableRect.set(l, t, l + (w / 3), t + h);
-					} else if (x < _viewWidth / 3 + _viewWidth / 3) {
-						_reusableRect.set(l + (w / 3), t, l + (w / 3) + (w / 3), t + h);
-					} else {
-						_reusableRect.set(l + (w / 3) + (w / 3), t, l + (w / 3) + (w / 3) + (w / 3), t + h);
-					}
-					if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1) {
-						_elementsPaint.setColor(selectedCircle.getColor());
-
-						_elementsPaint.setAlpha(150);
-						canvas.drawRect(_reusableRect, _elementsPaint);
-						_elementsPaint.setAlpha(255);
-					}
-				}
-				if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1 && _currentTouchIsInquickTouchZone) {
-					_elementsPaint.setColor(selectedCircle.getColor());
+					int imageSize = Tools.convertDpToPixel(24);
+					int imageSizeHalf = imageSize / 2;
+					canvas.drawBitmap(_moveBitmap, null, new Rect(l + w / 2 - imageSizeHalf, t + h / 2 - imageSizeHalf, l + w / 2 + imageSizeHalf, t + h / 2 + imageSizeHalf), _bitmapPaint);
 				} else {
-					_elementsPaint.setColor(Color.parseColor("#AAAAAA"));
+					if (_currentTouchIsInquickTouchZone && _startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null) {
+						if (_startAndEndTouchPoint[1] != null) {
+							x = _startAndEndTouchPoint[1].x;
+							y = _startAndEndTouchPoint[1].y;
+						} else {
+							x = _startAndEndTouchPoint[0].x;
+							y = _startAndEndTouchPoint[0].y;
+						}
+
+						if (x < _viewWidth / 3) {
+							_reusableRect.set(l, t, l + (w / 3), t + h);
+						} else if (x < _viewWidth / 3 + _viewWidth / 3) {
+							_reusableRect.set(l + (w / 3), t, l + (w / 3) + (w / 3), t + h);
+						} else {
+							_reusableRect.set(l + (w / 3) + (w / 3), t, l + (w / 3) + (w / 3) + (w / 3), t + h);
+						}
+						if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1) {
+							_elementsPaint.setColor(selectedCircle.getColor());
+
+							_elementsPaint.setAlpha(150);
+							canvas.drawRect(_reusableRect, _elementsPaint);
+							_elementsPaint.setAlpha(255);
+						}
+					}
+					if (_startAndEndTouchPoint != null && _startAndEndTouchPoint[0] != null && selectedCircle.getId() != -1 && _currentTouchIsInquickTouchZone) {
+						_elementsPaint.setColor(selectedCircle.getColor());
+					} else {
+						_elementsPaint.setColor(Color.parseColor("#AAAAAA"));
+					}
+
+					canvas.drawLine(l + w / 3, t, l + w / 3, t + h, _elementsPaint);
+					canvas.drawLine(l + w * 2 / 3, t, l + w * 2 / 3, t + h, _elementsPaint);
+
+					_elementsPaint.setStyle(Paint.Style.STROKE);
+					canvas.drawRect(l, t, l + w, t + h, _elementsPaint);
+					_elementsPaint.setStyle(Paint.Style.FILL);
 				}
 
-				canvas.drawLine(l + w / 3, t, l + w / 3, t + h, _elementsPaint);
-				canvas.drawLine(l + w * 2 / 3, t, l + w * 2 / 3, t + h, _elementsPaint);
-
-				_elementsPaint.setStyle(Paint.Style.STROKE);
-				canvas.drawRect(l, t, l + w, t + h, _elementsPaint);
-				_elementsPaint.setStyle(Paint.Style.FILL);
 			}
 		}
 	}
@@ -904,5 +1002,22 @@ public class GameView extends View {
 
 	public boolean isFinished() {
 		return _currentGameField.getTowers().get(1).getCircles().size() == _currentGameDiskNumber || _currentGameField.getTowers().get(2).getCircles().size() == _currentGameDiskNumber;
+	}
+
+	public QuickTouchListener getQuickTouchListener() {
+		return _quickTouchListener;
+	}
+
+	public void setQuickTouchListener(QuickTouchListener _quickTouchListener) {
+		this._quickTouchListener = _quickTouchListener;
+	}
+
+	public void enterEditMode() {
+		_isQtEditMode = true;
+		_isMovingQuickTouch = false;
+
+		_moveBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_drag);
+
+		invalidate();
 	}
 }
