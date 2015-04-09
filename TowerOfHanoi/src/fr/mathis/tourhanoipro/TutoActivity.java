@@ -77,7 +77,7 @@ public class TutoActivity extends ActionBarActivity implements OnPageChangeListe
 
 		cpi.updateBounds(position, TutoPagerAdapter.NB_STEPS, positionOffset);
 
-		if (position == 1) {
+		if (position == pager.getAdapter().getCount() - 2) {
 			if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
 				vBottomContainer.setTranslationX(-positionOffsetPixels);
 				vBottomSeparator.setTranslationX(-positionOffsetPixels);

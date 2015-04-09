@@ -80,13 +80,16 @@ public class TutoStepFragment extends Fragment {
 			v = inflater.inflate(R.layout.fragment_step1, container, false);
 			((GameView) v.findViewById(R.id.gv_tuto_1)).setDisabled(true);
 			((GameView) v.findViewById(R.id.gv_tuto_1)).setDemoMode(GameView.MODE_GOAL);
+			break;
+		case 2:
+			v = inflater.inflate(R.layout.fragment_step2, container, false);
 			((GameView) v.findViewById(R.id.gv_tuto_2)).setDisabled(true);
 			((GameView) v.findViewById(R.id.gv_tuto_2)).setDemoMode(GameView.MODE_MULTIPLE);
 			((GameView) v.findViewById(R.id.gv_tuto_3)).setDisabled(true);
 			((GameView) v.findViewById(R.id.gv_tuto_3)).setDemoMode(GameView.MODE_SIZE);
 			break;
-		case 2:
-			v = inflater.inflate(R.layout.fragment_step2, container, false);
+		case 3:
+			v = inflater.inflate(R.layout.fragment_step3, container, false);
 			break;
 		default:
 			break;

@@ -7,7 +7,7 @@ import fr.mathis.tourhanoipro.fragment.TutoStepFragment;
 
 public class TutoPagerAdapter extends FragmentStatePagerAdapter {
 
-    public static int NB_STEPS = 3;
+    public static int NB_STEPS = 4;
     
     public TutoPagerAdapter(FragmentManager fm) {
             super(fm);
