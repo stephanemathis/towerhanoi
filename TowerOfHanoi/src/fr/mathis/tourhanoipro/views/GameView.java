@@ -695,7 +695,7 @@ public class GameView extends View {
 				}
 
 				int circleWidth = (_viewWidth * 1 / 3 - 10) * ((selectedCircle.getId()) * 100 / _currentGameDiskNumber) / 100;
-				if (circleWidth == 0)
+				if (circleWidth < 2)
 					circleWidth = 2;
 
 				int circleHeight = Tools.convertDpToPixel(10.0f);
