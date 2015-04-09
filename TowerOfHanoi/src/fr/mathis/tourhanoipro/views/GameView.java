@@ -55,6 +55,7 @@ public class GameView extends View {
 
 	// draw variables
 	Bitmap _moveBitmap;
+	Bitmap _qtBitmap;
 	int _viewHeight;
 	int _viewWidth;
 	Rect _reusableRect;
@@ -746,6 +747,13 @@ public class GameView extends View {
 				canvas.drawRect(_reusableRect, _elementsPaint);
 			}
 
+			if (_isBuildingQuickZone && (_qtEndEdgeBuilding == null && _qtStartEdgeBuilding == null)) {
+				_elementsPaint.setColor(Color.BLACK);
+				_elementsPaint.setAlpha(180);
+				_reusableRect.set(0, 0, _viewWidth, _viewHeight);
+				canvas.drawRect(_reusableRect, _elementsPaint);
+			}
+
 			if (_isBuildingQuickZone && _qtEndEdgeBuilding != null && _qtStartEdgeBuilding != null) {
 				int xx, yy, w, h;
 				xx = _qtStartEdgeBuilding.x < _qtEndEdgeBuilding.x ? _qtStartEdgeBuilding.x : _qtEndEdgeBuilding.x;
@@ -753,8 +761,19 @@ public class GameView extends View {
 
 				w = Math.abs(_qtStartEdgeBuilding.x - _qtEndEdgeBuilding.x);
 				h = Math.abs(_qtStartEdgeBuilding.y - _qtEndEdgeBuilding.y);
-				_elementsPaint.setColor(Color.parseColor("#AAAAAA"));
-				canvas.drawRect(xx, yy, xx + w, yy + h, _elementsPaint);
+
+				_elementsPaint.setColor(Color.BLACK);
+				_elementsPaint.setAlpha(180);
+
+				canvas.drawRect(0, 0, _viewWidth, yy, _elementsPaint);
+				canvas.drawRect(0, yy + h, _viewWidth, _viewHeight, _elementsPaint);
+				canvas.drawRect(0, yy, xx, yy + h, _elementsPaint);
+				canvas.drawRect(xx + w, yy, _viewWidth, yy + h, _elementsPaint);
+			}
+
+			if (_isBuildingQuickZone) {
+				int imageSizeHalf = _qtBitmap.getWidth() / 2;
+				canvas.drawBitmap(_qtBitmap, null, new Rect(_viewWidth / 2 - imageSizeHalf, _viewHeight / 2 - imageSizeHalf, _viewWidth / 2 + imageSizeHalf, _viewHeight / 2 + imageSizeHalf), _bitmapPaint);
 			}
 
 			if (_shouldDrawHelpLine) {
@@ -951,6 +970,7 @@ public class GameView extends View {
 			_isBuildingQuickZone = false;
 		} else {
 			_isBuildingQuickZone = true;
+			_qtBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.ic_action_smalltouch);
 		}
 		this.invalidate();
 	}
