@@ -728,7 +728,7 @@ public class GameView extends View {
 				ClassCircle circle = new ClassCircle(2, Color.parseColor("#FF4444"));
 
 				int circleWidth = (_viewWidth * 1 / 3 - 10) * ((circle.getId()) * 100 / _currentGameDiskNumber) / 100;
-				if (circleWidth == 0)
+				if (circleWidth < 2)
 					circleWidth = 2;
 
 				int circleHeight = Tools.convertDpToPixel(10.0f);
@@ -739,7 +739,7 @@ public class GameView extends View {
 				canvas.drawRect(_reusableRect, _elementsPaint);
 
 				circleWidth = (_viewWidth * 1 / 3 - 10) * ((circle2.getId()) * 100 / _currentGameDiskNumber) / 100;
-				if (circleWidth == 0)
+				if (circleWidth < 2)
 					circleWidth = 2;
 
 				_reusableRect.set(x - (circleWidth / 2), y - (circleHeight / 2) - circleHeight, x + (circleWidth / 2), y + (circleHeight / 2) - circleHeight);
@@ -798,8 +798,11 @@ public class GameView extends View {
 				l = _currentGameField.getQtCopy().getLeft();
 
 				_elementsPaint.setColor(Color.WHITE);
+				_elementsPaint.setAlpha(240);
 
 				canvas.drawRect(l, t, l + w, t + h, _elementsPaint);
+
+				_elementsPaint.setAlpha(255);
 
 				if (_isQtEditMode) {
 					_elementsPaint.setColor(getResources().getColor(R.color.primary_color));
