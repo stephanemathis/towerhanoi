@@ -1,8 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
 
     <string name="app_name">Tours d\'Hanoi</string>
     <string name="drawer_open">Ouvrir</string>
     <string name="drawer_close">Fermer</string>
+    <string name="nothing"></string>
     <string name="s26">Nouvelle partie</string>
     <string name="s37">TUTORIEL</string>
     <string name="s38">Succès</string>
